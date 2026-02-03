@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>認証 | Welcome</title>
+    <style>
+        /* 基本スタイル */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            transition: all 0.3s ease;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 2px rgba(118, 75, 162, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: #5a3a7d;
+        }
+
+        .toggle-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .toggle-link a {
+            color: #764ba2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* 非表示クラス */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-form">
+        <h2>ログイン</h2>
+        <form>
+            <div class="form-group">
+                <label>メールアドレス</label>
+                <input type="email" placeholder="example@mail.com" required>
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn">ログイン</button>
+        </form>
+        <div class="toggle-link">
+            アカウントをお持ちでないですか？ <a href="javascript:void(0)" onclick="toggleForm()">新規登録</a>
+        </div>
+    </div>
+
+    <div id="register-form" class="hidden">
+        <h2>新規登録</h2>
+        <form>
+            <div class="form-group">
+                <label>お名前</label>
+                <input type="text" placeholder="山田 太郎" required>
+            </div>
+            <div class="form-group">
+                <label>メールアドレス</label>
+                <input type="email" placeholder="example@mail.com" required>
+            </div>
+            <div class="form-group">
+                <label>パスワード</label>
+                <input type="password" placeholder="8文字以上" required>
+            </div>
+            <button type="submit" class="btn">アカウント作成</button>
+        </form>
+        <div class="toggle-link">
+            すでにアカウントをお持ちですか？ <a href="javascript:void(0)" onclick="toggleForm()">ログイン</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleForm() {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        
+        // hiddenクラスを付け替えて表示/非表示を切り替え
+        loginForm.classList.toggle('hidden');
+        registerForm.classList.toggle('hidden');
+    }
+</script>
+
+</body>
+</html>
