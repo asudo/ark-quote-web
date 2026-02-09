@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "【ｶﾅﾃﾞﾝ】佐藤 伸佳"
       ],
       "株式会社リブ・ネクスト": [
-        "【ﾘｸﾞﾈｸｽﾄ】小林 一路"
+        "【ﾘﾌﾞﾈｸｽﾄ】小林 一路"
       ],
       "株式会社新日通": [
         "【新日通】山中 浩",
@@ -74,6 +74,10 @@ document.addEventListener("DOMContentLoaded", function () {
         "【GNE】高岡 裕"
       ],
       "株式会社ウム・ヴェルト・ジャパン": [
+        "【ｳﾑﾍﾞﾙﾄ】藤本 幸大",
+        "【ｳﾑﾍﾞﾙﾄ】横田 晋宏"
+      ],
+      "ウム・ヴェルト株式会社": [
         "【ｳﾑﾍﾞﾙﾄ】藤本 幸大",
         "【ｳﾑﾍﾞﾙﾄ】横田 晋宏"
       ],
@@ -175,7 +179,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 宛先選択による見積番号2の自動入力設定
-  function setupDestinationSelect() {
+  function setupdestinationInput() {
     const destinationInput = document.getElementById("destinationInput");
     const estimateNo2 = document.getElementById("estimateNo2");
     if (!destinationInput || !estimateNo2) return;
@@ -380,7 +384,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // 通常の会社 → 担当者ベース
     const personMap = {
       "【新日通】山中 浩": "Y",
-      "【ﾘｸﾞﾈｸｽﾄ】小林 一路": "K",
+      "【ﾘﾌﾞﾈｸｽﾄ】小林 一路": "K",
       "【いろは堂】染矢 剛": "S",
       "【いろは堂】日高 重夫": "H",
       "【いろは堂】奥本 哲也": "T",
@@ -448,10 +452,24 @@ document.addEventListener("DOMContentLoaded", function () {
   setupDiscountToggle();
   setupEstimateDateLimit();
   setupCompanySelect();
-  setupDestinationSelect();
+  setupdestinationInput();
   setupEstimateNo3();
   setupCreatorSelect();
   setupEstimateNo6(); // ← ← ← ★★★ これを追加！！
+
+  // ページ読み込み時に今日の日付をセット
+  const estDateInput = document.getElementById("estimateDate");
+  if (estDateInput && !estDateInput.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+
+    // 値をセット
+    estDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    estDateInput.dispatchEvent(new Event('change'));
+  }
 });
 
 //見積番号1～6による見積番号の自動入力設定
@@ -514,7 +532,7 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   function updateContent() {
-    // チェックされているラジオボタンを探して内容を反映S
+    // チェックされているラジオボタンを探して内容を反映
     const selectedRadio = document.querySelector("input[name='koujiType']:checked");
     if (selectedRadio) {
       workContent.value = koujiContentMap[selectedRadio.id] || "";
@@ -552,7 +570,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 //宛先と注文元と注文番号1と注文番号2によって注文番号を自動入力する設定
 document.addEventListener('DOMContentLoaded', () => {
-  const destinationSelect = document.getElementById('destinationSelect');  // 宛先
+  const destinationInput = document.getElementById('destinationInput');  // 宛先
   const orderNumber1 = document.getElementById('orderNumber1');          // 注文番号1（注文元に応じて自動入力）
   const orderNumber2 = document.getElementById('orderNumber2');          // 注文番号2（ユーザー入力）
   const orderFromSelect = document.getElementById('orderFromSelect');    // 注文元
@@ -575,13 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const destinationSelect = document.getElementById('destinationSelect'); // 宛先（B4）
+    const destinationInput = document.getElementById('destinationInput'); // 宛先（B4）
     const orderNumber1 = document.getElementById('orderNumber1');           // 注文番号1（E16）
     const orderNumber2 = document.getElementById('orderNumber2');           // 注文番号2（E17）
     const orderNumberFull = document.getElementById('orderNumberFull');     // 出力先
 
     function updateOrderNumberFull() {
-      const destination = destinationSelect?.value?.trim() || "";
+      const destination = destinationInput?.value?.trim() || "";
       const no1 = orderNumber1?.value?.trim() || "";
       const no2 = orderNumber2?.value?.trim() || "";
 
@@ -596,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    destinationSelect?.addEventListener('change', updateOrderNumberFull);
+    destinationInput?.addEventListener('change', updateOrderNumberFull);
     orderNumber1?.addEventListener('input', updateOrderNumberFull);
     orderNumber2?.addEventListener('input', updateOrderNumberFull);
   });
@@ -618,10 +636,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const destinationSelect = document.getElementById('destinationSelect');
+    const destinationInput = document.getElementById('destinationInput');
     const orderNumber2 = document.getElementById('orderNumber2');
 
-    destinationSelect.addEventListener('change', updateOrderNumberFull);
+    destinationInput.addEventListener('change', updateOrderNumberFull);
     orderNumber2.addEventListener('input', updateOrderNumberFull);
   });
 
