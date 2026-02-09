@@ -459,7 +459,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ページ読み込み時に今日の日付をセット
   const estDateInput = document.getElementById("estimateDate");
-  if (estDateInput && !estDateInput.value) {
+  if (estDateInput) {
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, "0");
@@ -469,6 +469,26 @@ document.addEventListener("DOMContentLoaded", function () {
     estDateInput.value = `${yyyy}-${mm}-${dd}`;
 
     estDateInput.dispatchEvent(new Event('change'));
+  }
+
+  // --- 宛先がリコージャパンの時に注文情報を表示する設定 ---
+  const destInput = document.getElementById("destinationInput");
+  const orderSection = document.getElementById("orderSection");
+
+  if (destInput && orderSection) {
+    const toggleOrderSection = () => {
+      // 宛先がリコージャパン株式会社のときだけ表示、それ以外は隠す
+      if (destInput.value === "リコージャパン株式会社") {
+        orderSection.classList.remove("d-none");
+      } else {
+        orderSection.classList.add("d-none");
+      }
+    };
+
+    // 入力されるたびにチェック
+    destInput.addEventListener("input", toggleOrderSection);
+    // ページ読み込み時の初期状態もチェック
+    toggleOrderSection();
   }
 });
 

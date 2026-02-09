@@ -328,7 +328,7 @@
           <hr class="section-divider">
 
           <!-- 注文情報 -->
-          <fieldset class="mb-4">
+          <fieldset class="mb-4 d-none" id="orderSection">
             <legend>注文情報</legend>
             <div class="row g-3">
               <div class="col-md-6">
@@ -616,10 +616,12 @@
                   <input type="text" id="companyName" class="form-control" placeholder="例：株式会社〇〇〇">
                 </div>
               </div>
-            </div>
+            </div> 
+          </div>
+          <hr class="section-divider">
+          
 
-            <hr class="section-divider">
-
+          <div class="container">
             <!-- 高所作業車 -->
             <div class="mb-3">
               <div class="form-check mb-2">
@@ -628,7 +630,7 @@
                   高所作業車
                 </label>
               </div>
-
+            
               <!-- 天井高①・② 横並び -->
               <div class="row g-2 align-items-center">
                 <div class="col-auto">

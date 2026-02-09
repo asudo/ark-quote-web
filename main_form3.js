@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    
+
   const constructionForm = document.getElementById("constructionForm");
   const constructionTableBody = document.querySelector(".construction-scroll tbody");
   const unitSelect = document.getElementById("unitSelect");
@@ -18,42 +18,63 @@ document.addEventListener("DOMContentLoaded", function () {
   const itemNameInput = constructionForm.querySelector('select[name="itemName"]');
   const basePriceInput = constructionForm.querySelector('input[name="basePrice"]');
 
- // ツールチェック
+  // ツールチェック
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
 
-// 高所作業車テーブルの自動計算ロジック
-const tableRows = document.querySelectorAll('table tbody tr');
+  // --- 高所作業車の表示・非表示切り替えロジック ---
+  const highWorkCheck = document.getElementById("highWorkCar");
+  const highWorkSection = document.getElementById("highWorkSection");
 
-tableRows.forEach(row => {
-  const qtyInput = row.cells[2]?.querySelector('input');
-  const unitPriceInput = row.cells[4]?.querySelector('input');
-  const transportInput = row.cells[5]?.querySelector('input');
-  const totalUnitInput = row.cells[6]?.querySelector('input');
-  const subtotalInput = row.cells[7]?.querySelector('input');
+  if (highWorkCheck && highWorkSection) {
+    const toggleHighWork = () => {
+      // チェックが入っていれば表示(d-noneを消す)、なければ非表示(d-noneを足す)
+      if (highWorkCheck.checked) {
+        highWorkSection.classList.remove("d-none");
+      } else {
+        highWorkSection.classList.add("d-none");
+      }
+    };
 
-  if (!qtyInput || !unitPriceInput || !transportInput || !totalUnitInput || !subtotalInput) return;
+    // ユーザーがクリックした時に実行
+    highWorkCheck.addEventListener("change", toggleHighWork);
 
-  const updateRow = () => {
-    const qty = parseFloat(qtyInput.value) || 0;
-    const unitPrice = parseFloat(unitPriceInput.value) || 0;
-    const transport = parseFloat(transportInput.value) || 0;
+    // ページ読み込み時の初期状態（リロード対策）
+    toggleHighWork();
+  }
 
-    const totalUnit = unitPrice + transport;
-    const subtotal = qty * totalUnit;
+  // 高所作業車テーブルの自動計算ロジック
+  const tableRows = document.querySelectorAll('table tbody tr');
 
-    totalUnitInput.value = totalUnit ? totalUnit.toFixed(0) : '';
-    subtotalInput.value = subtotal ? subtotal.toFixed(0) : '';
-  };
+  tableRows.forEach(row => {
+    const qtyInput = row.cells[2]?.querySelector('input');
+    const unitPriceInput = row.cells[4]?.querySelector('input');
+    const transportInput = row.cells[5]?.querySelector('input');
+    const totalUnitInput = row.cells[6]?.querySelector('input');
+    const subtotalInput = row.cells[7]?.querySelector('input');
 
-  [qtyInput, unitPriceInput, transportInput].forEach(input => {
-    input.addEventListener('input', updateRow);
+    if (!qtyInput || !unitPriceInput || !transportInput || !totalUnitInput || !subtotalInput) return;
+
+    const updateRow = () => {
+      const qty = parseFloat(qtyInput.value) || 0;
+      const unitPrice = parseFloat(unitPriceInput.value) || 0;
+      const transport = parseFloat(transportInput.value) || 0;
+
+      const totalUnit = unitPrice + transport;
+      const subtotal = qty * totalUnit;
+
+      totalUnitInput.value = totalUnit ? totalUnit.toFixed(0) : '';
+      subtotalInput.value = subtotal ? subtotal.toFixed(0) : '';
+    };
+
+    [qtyInput, unitPriceInput, transportInput].forEach(input => {
+      input.addEventListener('input', updateRow);
+    });
   });
-});
 
-   // 昼間,夜間,高所,特殊,産廃等,微調整 
+  // 昼間,夜間,高所,特殊,産廃等,微調整 
   const profitFields = {
     day: document.querySelector('[name="profit_day"]'),
     night: document.querySelector('[name="profit_night"]'),
@@ -112,7 +133,7 @@ tableRows.forEach(row => {
         `<td><input type="checkbox" class="coeffCheck" data-type="${type}"></td>`
       ).join("");
 
-     tr.innerHTML = `
+      tr.innerHTML = `
         <td>
           <button class="btn btn-sm btn-success edit-row">編集</button>
           <button class="btn btn-sm btn-danger delete-row ms-1">削除</button>
@@ -156,59 +177,59 @@ tableRows.forEach(row => {
 
   // 利益計算ロジック
   function calculateConfirmedPrices() {
-  constructionTableBody.querySelectorAll("tr").forEach(row => {
-    // 基本単価を取得（input[name="basePrice"]）
-    const basePriceInput = row.querySelector('input[name="basePrice"]');
-    if (!basePriceInput) return;
+    constructionTableBody.querySelectorAll("tr").forEach(row => {
+      // 基本単価を取得（input[name="basePrice"]）
+      const basePriceInput = row.querySelector('input[name="basePrice"]');
+      if (!basePriceInput) return;
 
-    const basePrice = parseFloat(basePriceInput.value) || 0;
-    let totalConfirmed = 0;
+      const basePrice = parseFloat(basePriceInput.value) || 0;
+      let totalConfirmed = 0;
 
-    // 各利益タイプごとのチェックと計算
-    types.forEach(type => {
-      const profit = getProfit(type); // フォーム上部の利益率を取得
-      const checkbox = row.querySelector(`.coeffCheck[data-type="${type}"]`);
-      const confirmedInput = row.querySelector(`.confirmedInput[data-type="${type}Confirmed"]`);
-      const coeffCheckbox = row.querySelector('input[name="coefficient"]');
+      // 各利益タイプごとのチェックと計算
+      types.forEach(type => {
+        const profit = getProfit(type); // フォーム上部の利益率を取得
+        const checkbox = row.querySelector(`.coeffCheck[data-type="${type}"]`);
+        const confirmedInput = row.querySelector(`.confirmedInput[data-type="${type}Confirmed"]`);
+        const coeffCheckbox = row.querySelector('input[name="coefficient"]');
 
-      const isChecked = checkbox?.checked;
-      const isCoeffChecked = coeffCheckbox?.checked;
+        const isChecked = checkbox?.checked;
+        const isCoeffChecked = coeffCheckbox?.checked;
 
-      if (confirmedInput) {
-        if (isChecked || isCoeffChecked) {
-          const confirmed = basePrice * profit;
-          confirmedInput.value = confirmed.toFixed(0); // 四捨五入
-          totalConfirmed += confirmed;
-        } else {
-          confirmedInput.value = '';
+        if (confirmedInput) {
+          if (isChecked || isCoeffChecked) {
+            const confirmed = basePrice * profit;
+            confirmedInput.value = confirmed.toFixed(0); // 四捨五入
+            totalConfirmed += confirmed;
+          } else {
+            confirmedInput.value = '';
+          }
         }
+      });
+
+      // 合計（確定単価）を入力
+      const totalConfirmedInput = row.querySelector('.totalConfirmedPrice');
+      if (totalConfirmedInput) {
+        totalConfirmedInput.value = totalConfirmed.toFixed(0);
       }
     });
-
-    // 合計（確定単価）を入力
-    const totalConfirmedInput = row.querySelector('.totalConfirmedPrice');
-    if (totalConfirmedInput) {
-      totalConfirmedInput.value = totalConfirmed.toFixed(0);
-    }
-  });
-}
+  }
 
 
   // 利益入力欄の変更時に再計算
-Object.values(profitFields).forEach(input => {
-  input.addEventListener("input", calculateConfirmedPrices);
-});
+  Object.values(profitFields).forEach(input => {
+    input.addEventListener("input", calculateConfirmedPrices);
+  });
 
-// 行内チェックボックスや係数チェックボックス変更でも再計算
-document.addEventListener("input", e => {
-  if (
-    e.target.matches('.coeffCheck') ||
-    e.target.matches('input[name="coefficient"]') ||
-    e.target.matches('input[name="basePrice"]')
-  ) {
-    calculateConfirmedPrices();
-  }
-});
+  // 行内チェックボックスや係数チェックボックス変更でも再計算
+  document.addEventListener("input", e => {
+    if (
+      e.target.matches('.coeffCheck') ||
+      e.target.matches('input[name="coefficient"]') ||
+      e.target.matches('input[name="basePrice"]')
+    ) {
+      calculateConfirmedPrices();
+    }
+  });
 
 
   // 行番号更新
