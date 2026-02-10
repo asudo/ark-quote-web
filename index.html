@@ -32,8 +32,8 @@
           aria-controls="form2" aria-selected="false">A材：商品等</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="form2-tab" data-bs-toggle="tab" data-bs-target="#form2" type="button" role="tab"
-          aria-controls="form2" aria-selected="false">B材：電材購入等</button>
+        <button class="nav-link" id="form4-tab" data-bs-toggle="tab" data-bs-target="#form4" type="button" role="tab"
+          aria-controls="form4" aria-selected="false">B材：電材購入等</button>
       </li>
     </ul>
 
@@ -45,8 +45,8 @@
         <!-- form1.html の <body> の中身をそのまま貼り付け（container なしでOK） -->
         <h1 class="text-center mb-4">見積web</h1>
         <p class="text-center text-muted small">
-          通常は＊以外すべて必須項目<br>
-          ＊は宛先がリコージャパン株式会社の場合必須項目になる。
+          通常はすべての項目を入力してください。<br>
+          ※ 宛先に「リコージャパン株式会社」を選択した場合のみ、「注文情報（＊）」の入力項目が自動で表示されます。
         </p>
 
         <form>
@@ -163,6 +163,7 @@
               <div class="col-md-4">
                 <label for="estimateNo7" class="form-label">枝番⑦</label>
                 <input type="text" class="form-control" id="estimateNo7" name="estimateNo7" readonly>
+                <p class="text-note">※ 見積の保存・修正時に自動入力されます。</p>
               </div>
             </div>
           </fieldset>
@@ -267,10 +268,6 @@
                 </select>
               </div>
 
-              <div class="col-12">
-                <hr class="my-2">
-              </div>
-
               <div class="col-md-6">
                 <label class="form-label">産業廃棄物</label>
                 <div class="d-flex gap-3 mt-1">
@@ -301,23 +298,31 @@
                 </div>
               </div>
 
+              <div class="col-12">
+                <hr style="border-top: 2px dashed #969696; margin: 10px 0;">
+              </div>
+
               <div class="col-md-6">
                 <div class="d-flex align-items-center gap-2 mt-2">
-                  <label class="form-label mb-0" for="processSheet">行程管理票</label>
+                  <label class="form-label mb-0" for="processSheet" style="width: 5.5em;">行程管理票</label>
                   <input class="form-check-input" type="checkbox" id="processSheet" name="processSheet">
                 </div>
               </div>
               <div class="col-md-6"></div>
 
+              <div class="col-12">
+                <hr style="border-top: 2px dashed #969696; margin: 10px 0;">
+              </div>
+
               <div class="col-md-6">
                 <div class="d-flex align-items-center gap-2 mt-1">
-                  <label class="form-label mb-0" for="yearEnd">年末年始</label>
+                  <label class="form-label mb-0" for="yearEnd" style="width: 5.5em;">年末年始</label>
                   <input class="form-check-input" type="checkbox" id="yearEnd" name="yearEnd">
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="d-flex align-items-center gap-2 mt-1">
-                  <label class="form-label mb-0" for="fiscalEnd">年度末</label>
+                  <label class="form-label mb-0" for="fiscalEnd" style="width: 5.5em;">年度末</label>
                   <input class="form-check-input" type="checkbox" id="fiscalEnd" name="fiscalEnd">
                 </div>
               </div>
@@ -358,10 +363,10 @@
                 <label for="orderNumber2" class="form-label">＊注文番号2</label>
                 <input type="text" id="orderNumber2" name="orderNumber2" class="form-control" placeholder="0000000000">
               </div>
+              <hr class="section-divider">
             </div>
           </fieldset>
 
-          <hr class="section-divider">
 
           <!-- その他 -->
           <!-- 値引き -->
@@ -595,6 +600,213 @@
         </div>
       </div>
 
+           <!-- 🔹 form4の内容（B材） -->
+      <div class="tab-pane fade" id="form4" role="tabpanel" aria-labelledby="form4-tab">
+        <!-- form4.html の <body> の中身をそのまま貼り付け（container なしでOK） -->
+        <div class="row justify-content-center">
+          <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+              <h3>B材:電材購入等</h3>
+              <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modal-inputModal">新規入力</button>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- 合計エリア -->
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">金額合計</label>
+                <div class="total-summary-box" id="main-totalAmount">¥0</div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">定価合計</label>
+                <div class="total-summary-box" id="main-totalListPrice">¥0</div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">入値合計</label>
+                <div class="total-summary-box" id="main-totalCostPrice">¥0</div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">入値率合計</label>
+                <div class="total-summary-box" id="main-totalCostRate">0%</div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">売値率合計</label>
+                <div class="total-summary-box" id="main-totalSellRate">0%</div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">利益-入値合計</label>
+                <div class="total-summary-box" id="main-totalProfit">¥0</div>
+              </div>
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label mb-1">利益-入値率</label>
+                <div class="total-summary-box" id="main-totalProfitRate">0%</div>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- テーブル -->
+            <div class="table-responsive mb-4">
+              <table class="table table-bordered table-sm text-nowrap">
+                <thead class="table-light">
+                  <tr>
+                    <th>操作</th>
+                    <th>No.</th>
+                    <th>名称</th>
+                    <th>規格</th>
+                    <th>数量</th>
+                    <th>単位</th>
+                    <th>単価</th>
+                    <th>金額</th>
+                    <th>備考</th>
+                    <th>定価</th>
+                    <th>定価合計</th>
+                    <th>入値</th>
+                    <th>入値合計</th>
+                    <th>入値率</th>
+                    <th>売値率</th>
+                    <th>項目名</th>
+                    <th>実数</th>
+                    <th>見積会社</th>
+                  </tr>
+                </thead>
+                <tbody id="main-itemTableBody">
+                  <tr>
+                    <td>1</td>
+                    <td colspan="16">データ未入力</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- モーダル -->
+          <div class="modal fade" id="modal-inputModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">新規入力</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="modal-inputForm" class="modal-body">
+                  <div class="row g-3">
+                    <!-- モーダルのフォーム内容 -->
+                    <div class="col-md-6">
+                      <label class="form-label required">名称</label>
+                      <input type="text" class="form-control" id="modal-name" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">規格</label>
+                      <input type="text" class="form-control" id="modal-spec">
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label required">数量</label>
+                      <input type="number" class="form-control" id="modal-quantity" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label required">単位</label>
+                      <select class="form-select" id="modal-unit" required>
+                        <option value="">選択してください</option>
+                        <option value="台">台</option>
+                        <option value="式">式</option>
+                        <option value="本">本</option>
+                        <option value="セット">ｾｯﾄ</option>
+                        <option value="個">個</option>
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">単価</label>
+                      <input type="number" class="form-control" id="modal-unitPrice">
+                      <div class="text-note">※入値に応じて、1.3倍した定価を100円単位で自動入力されます。</div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">金額</label>
+                      <input type="number" class="form-control" id="modal-amount">
+                      <div class="text-note">※単価が入力されている場合のみ、単価×数量で表示されます。</div>
+                    </div>
+
+                    <div class="col-md-12">
+                      <label class="form-label">備考</label>
+                      <input type="text" class="form-control" id="modal-remark">
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="col-md-3">
+                      <label class="form-label required">定価</label>
+                      <input type="number" class="form-control" id="modal-listPrice" required>
+                      <div class="text-note">※定価がわからない場合のみオープン価格で入力してください。</div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">定価合計</label>
+                      <input type="number" class="form-control" id="modal-listTotal">
+                      <div class="text-note">※数量×定価で表示されます。計算できない場合、単価×数量で表示されます。</div>
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label required">入値</label>
+                      <input type="number" class="form-control" id="modal-costPrice" required>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">入値合計</label>
+                      <input type="number" class="form-control" id="modal-costTotal">
+                      <div class="text-note">※数量が入力されている場合は入値×数量。未入力の場合は「入値×個数」で表示されます。</div>
+                    </div>
+
+                    <div class="col-md-3">
+                      <label class="form-label">入値率</label>
+                      <input type="text" class="form-control" id="modal-costRate">
+                      <div class="text-note">※入値 ÷ 定価 ×100％で表示されます。割り戻しエラー時は空欄になります。</div>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">売値率</label>
+                      <input type="text" class="form-control" id="modal-sellRate">
+                      <div class="text-note">※単価 ÷ 定価 ×100％で表示されます。割り戻しエラー時は空欄になります。</div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="col-md-3">
+                      <label class="form-label">項目名</label>
+                      <input type="text" class="form-control" id="modal-itemName">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">実数</label>
+                      <input type="text" class="form-control" id="modal-actual">
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="col-md-12">
+                      <label class="form-label">見積会社</label>
+                      <select class="form-select" id="modal-company">
+                        <option value="">選択してください</option>
+                        <option value="東芝">東芝</option>
+                        <option value="新明">新明</option>
+                        <option value="ﾔﾏﾃﾞﾝ">ﾔﾏﾃﾞﾝ</option>
+                        <option value="ﾄｼﾝ">ﾄｼﾝ</option>
+                        <option value="ﾎｰﾑｾﾝﾀｰ">ﾎｰﾑｾﾝﾀｰ</option>
+                        <option value="倉庫在庫">倉庫在庫</option>
+                        <option value="その他">その他</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-primary">登録完了</button>
+                  </div>
+
+                </form>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
 
 
@@ -616,22 +828,22 @@
                   <input type="text" id="companyName" class="form-control" placeholder="例：株式会社〇〇〇">
                 </div>
               </div>
-            </div> 
+            </div>
           </div>
-          <hr class="section-divider">
-          
+        </div>
+        <hr class="section-divider">
 
-          <div class="container">
-            <!-- 高所作業車 -->
-            <div class="mb-3">
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="highWorkCar">
-                <label class="form-check-label fw-bold" for="highWorkCar">
-                  高所作業車
-                </label>
-              </div>
-            
-              <!-- 天井高①・② 横並び -->
+        <div class="container">
+          <!-- 高所作業車 -->
+          <div class="mb-3">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="highWorkCar">
+              <label class="form-check-label fw-bold" for="highWorkCar">
+                高所作業車
+              </label>
+            </div>
+            <!-- 天井高①・② 横並び -->
+            <div id="highWorkSection" class="d-none">
               <div class="row g-2 align-items-center">
                 <div class="col-auto">
                   <label for="ceilingHeight1" class="col-form-label">天井高①</label>
@@ -647,825 +859,825 @@
                   <input type="text" id="ceilingHeight2" class="form-control" placeholder="例: 3.0m">
                 </div>
               </div>
-            </div>
 
-            <!-- 高所作業車テーブル -->
-            <div class="table-responsive mb-4">
-              <table class="table table-bordered align-middle text-center">
-                <thead class="table-secondary">
-                  <tr>
-                    <th>選択</th>
-                    <th>項目名</th>
-                    <th>数量</th>
-                    <th>単位</th>
-                    <th>単価</th>
-                    <th>運搬費</th>
-                    <th>単価合計<i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="※単価合計は、単価+運搬費で自動入力されます。"></i></th>
-                    <th>小計<i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="※小計は、数量×単価合計で自動入力されます。"></i></th>
-                    <th>備考1</th>
-                    <th>備考2</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><input type="checkbox" class="row-check"></td>
-                    <td>高車（中型）</td>
-                    <td><input type="number" class="form-control"></td>
-                    <td>
-                      <input type="text" class="form-control text-center" value="台" readonly>
-                    </td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="text" class="form-control"></td>
-                    <td><input type="text" class="form-control"></td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" class="row-check"></td>
-                    <td>高車（自走式）</td>
-                    <td><input type="number" class="form-control"></td>
-                    <td>
-                      <input type="text" class="form-control text-center" value="台" readonly>
-                    </td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="text" class="form-control"></td>
-                    <td><input type="text" class="form-control"></td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" class="row-check"></td>
-                    <td>ﾛｰﾘﾝｸﾞﾀﾜｰ・足場</td>
-                    <td><input type="number" class="form-control"></td>
-                    <td>
-                      <input type="text" class="form-control text-center" value="式" readonly>
-                    </td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="text" class="form-control"></td>
-                    <td><input type="text" class="form-control"></td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" class="row-check"></td>
-                    <td>ｸﾚｰﾝ・ﾕﾆｯｸ</td>
-                    <td><input type="number" class="form-control"></td>
-                    <td>
-                      <input type="text" class="form-control text-center" value="式" readonly>
-                    </td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control"></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="number" class="form-control" readonly></td>
-                    <td><input type="text" class="form-control"></td>
-                    <td><input type="text" class="form-control"></td>
-                  </tr>
-                </tbody>
-              </table>
+              <!-- 高所作業車テーブル -->
+              <div class="table-responsive mb-4">
+                <table class="table table-bordered align-middle text-center">
+                  <thead class="table-secondary">
+                    <tr>
+                      <th>選択</th>
+                      <th>項目名</th>
+                      <th>数量</th>
+                      <th>単位</th>
+                      <th>単価</th>
+                      <th>運搬費</th>
+                      <th>単価合計<i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
+                          data-bs-placement="top" title="※単価合計は、単価+運搬費で自動入力されます。"></i></th>
+                      <th>小計<i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
+                          data-bs-placement="top" title="※小計は、数量×単価合計で自動入力されます。"></i></th>
+                      <th>備考1</th>
+                      <th>備考2</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><input type="checkbox" class="row-check"></td>
+                      <td>高車（中型）</td>
+                      <td><input type="number" class="form-control"></td>
+                      <td>
+                        <input type="text" class="form-control text-center" value="台" readonly>
+                      </td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="text" class="form-control"></td>
+                      <td><input type="text" class="form-control"></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" class="row-check"></td>
+                      <td>高車（自走式）</td>
+                      <td><input type="number" class="form-control"></td>
+                      <td>
+                        <input type="text" class="form-control text-center" value="台" readonly>
+                      </td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="text" class="form-control"></td>
+                      <td><input type="text" class="form-control"></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" class="row-check"></td>
+                      <td>ﾛｰﾘﾝｸﾞﾀﾜｰ・足場</td>
+                      <td><input type="number" class="form-control"></td>
+                      <td>
+                        <input type="text" class="form-control text-center" value="式" readonly>
+                      </td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="text" class="form-control"></td>
+                      <td><input type="text" class="form-control"></td>
+                    </tr>
+                    <tr>
+                      <td><input type="checkbox" class="row-check"></td>
+                      <td>ｸﾚｰﾝ・ﾕﾆｯｸ</td>
+                      <td><input type="number" class="form-control"></td>
+                      <td>
+                        <input type="text" class="form-control text-center" value="式" readonly>
+                      </td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control"></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="number" class="form-control" readonly></td>
+                      <td><input type="text" class="form-control"></td>
+                      <td><input type="text" class="form-control"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
+        </div>
+        <hr class="section-divider">
 
-          <hr class="section-divider">
-
-          <!-- 各項目入力 -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-4">
-              <label class="form-label fw-bold">提出見積金額
-                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="※値引き+労務・諸経費+高所作業車等+商品・器具(A材)+消耗雑材(B材)が表示されます。"></i></label>
-              <input type="text" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-bold">値引き
-                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※見積Webにおいて「値引き」にチェックが入っている場合、その値引金額は-1を掛けた金額で表示されます。
+        <!-- 各項目入力 -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">提出見積金額
+              <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="※値引き+労務・諸経費+高所作業車等+商品・器具(A材)+消耗雑材(B材)が表示されます。"></i></label>
+            <input type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">値引き
+              <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※見積Webにおいて「値引き」にチェックが入っている場合、その値引金額は-1を掛けた金額で表示されます。
                   それ以外の場合は0円で表示されます。"></i></label>
+            </label>
+            <input type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">労務・諸経費
+              <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="※小計の合計金額が自動入力されます。"></i></label>
+            </label>
+            <input type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">高所作業車等
+              <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※「高所作業車」にチェックが入っている場合のみ、「高車（中型）」「高車（自走式）」「ローリングタワー・足場」「クレーン・ユニック」にチェックが入っている項目の
+                  小計金額を合計して表示します。※「高所作業車」にチェックがない場合は、金額は 0円 を表示します。"></i></label>
+            </label>
+            <input type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">商品・器具(A材)
+              <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="※見積webのA材・非常灯・照明器具がチェックの場合、A材:照明器具・空調器具。商品等の金額合計を表示する。それ以外の場合は0円を表示します。"></i></label>
+            </label>
+            <input type="text" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">消耗雑材(B材)
+              <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="※見積webのB材:電材購入等の金額合計を表示します。"></i></label>
+            </label>
+            <input type="text" class="form-control">
+          </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- 施工内容 -->
+        <div class="mb-4">
+          <h4 class="fw-bold">施工内容</h4>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">総数
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                  title="※台数/本数の合計を表示します。"></i></label>
               </label>
               <input type="text" class="form-control">
             </div>
-            <div class="col-md-4">
-              <label class="form-label fw-bold">労務・諸経費
+            <div class="col-md-6">
+              <label class="form-label fw-bold">合計・小計
                 <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="※小計の合計金額が自動入力されます。"></i></label>
+                  title="※小計の合計を表示します。"></i></label>
+              </label>
+              <input type="text" class="form-control">
+            </div>
+          </div>
+        </div>
+
+        <p class="small text-danger fw-bold">※東京案件は必ず駐車場代を入れるか確認すること<br>
+          ※4000円強制追加・最後に駐車場項目あり。確認後変更可能</p>
+
+        <!-- 利益入力テーブル -->
+        <div class="table-responsive mb-4">
+          <table class="table table-bordered text-center align-middle">
+            <thead>
+              <tr>
+                <th colspan="6" class="table-secondary">利益</th>
+              </tr>
+              <tr>
+                <th>昼間</th>
+                <th>夜間</th>
+                <th>高所</th>
+                <th>特殊</th>
+                <th>産廃等</th>
+                <th>微調整</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" class="form-control" name="profit_day"></td>
+                <td><input type="text" class="form-control" name="profit_night"></td>
+                <td><input type="text" class="form-control" name="profit_high"></td>
+                <td><input type="text" class="form-control" name="profit_special"></td>
+                <td><input type="text" class="form-control" name="profit_waste"></td>
+                <td><input type="text" class="form-control" name="profit_adjust"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+
+        <!-- 施工内容新規入力 -->
+        <div class="mb-4">
+          <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#constructionModal">
+            施工内容新規入力
+          </button>
+        </div>
+        <div class="table-responsive construction-scroll">
+          <table class="table table-bordered align-middle text-center">
+            <thead class="table-secondary">
+              <tr>
+                <th>操作</th>
+                <th>No</th>
+                <th>項目</th>
+                <th>灯用</th>
+                <th>台数/本数</th>
+                <th>単位</th>
+                <th>内容</th>
+                <th>本数</th>
+                <th>基本単価</th>
+                <th>
+                  昼間
+                  <br>
+                  <input type="checkbox" class="coeffCheck" data-type="day">
+                </th>
+                <th>
+                  夜間
+                  <br>
+                  <input type="checkbox" class="coeffCheck" data-type="night">
+                </th>
+                <th>
+                  高所
+                  <br>
+                  <input type="checkbox" class="coeffCheck" data-type="high">
+                </th>
+                <th>
+                  特殊
+                  <br>
+                  <input type="checkbox" class="coeffCheck" data-type="special">
+                </th>
+                <th>
+                  産廃等
+                  <br>
+                  <input type="checkbox" class="coeffCheck" data-type="waste">
+                </th>
+                <th>
+                  微調整
+                  <br>
+                  <input type="checkbox" class="coeffCheck" data-type="adjust">
+                </th>
+                <th>確定単価</th>
+                <th>小計</th>
+                <th>係数</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="19">データ未入力</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-danger fw-bold">※実際の経費・見積入力。見積依頼はしたか？</p>
+
+
+        <hr class="section-divider">
+
+        <!-- 単価 -->
+        <div class="mb-5">
+          <h4 class="fw-bold">単価</h4>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-bold">人工・外注費
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※合計の人件費を合計して自動入力されます。
+                    ※人工・外注費÷提出見積金額を％で表示します。"></i>
               </label>
               <input type="text" class="form-control">
             </div>
             <div class="col-md-4">
               <label class="form-label fw-bold">高所作業車等
-                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※「高所作業車」にチェックが入っている場合のみ、「高車（中型）」「高車（自走式）」「ローリングタワー・足場」「クレーン・ユニック」にチェックが入っている項目の
-                  小計金額を合計して表示します。※「高所作業車」にチェックがない場合は、金額は 0円 を表示します。"></i></label>
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                  title="※高所作業車等÷提出見積金額を％で表示します。"></i>
               </label>
               <input type="text" class="form-control">
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-bold">商品・器具(A材)
-                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="※見積webのA材・非常灯・照明器具がチェックの場合、A材:照明器具・空調器具。商品等の金額合計を表示する。それ以外の場合は0円を表示します。"></i></label>
-              </label>
-              <input type="text" class="form-control">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-bold">消耗雑材(B材)
-                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="※見積webのB材:電材購入等の金額合計を表示します。"></i></label>
-              </label>
-              <input type="text" class="form-control">
-            </div>
-          </div>
-
-          <hr class="section-divider">
-
-          <!-- 施工内容 -->
-          <div class="mb-4">
-            <h4 class="fw-bold">施工内容</h4>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold">総数
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                    title="※台数/本数の合計を表示します。"></i></label>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold">合計・小計
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                    title="※小計の合計を表示します。"></i></label>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-            </div>
-          </div>
-
-          <p class="small text-danger fw-bold">※東京案件は必ず駐車場代を入れるか確認すること<br>
-            ※4000円強制追加・最後に駐車場項目あり。確認後変更可能</p>
-
-          <!-- 利益入力テーブル -->
-          <div class="table-responsive mb-4">
-            <table class="table table-bordered text-center align-middle">
-              <thead>
-                <tr>
-                  <th colspan="6" class="table-secondary">利益</th>
-                </tr>
-                <tr>
-                  <th>昼間</th>
-                  <th>夜間</th>
-                  <th>高所</th>
-                  <th>特殊</th>
-                  <th>産廃等</th>
-                  <th>微調整</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><input type="text" class="form-control" name="profit_day"></td>
-                  <td><input type="text" class="form-control" name="profit_night"></td>
-                  <td><input type="text" class="form-control" name="profit_high"></td>
-                  <td><input type="text" class="form-control" name="profit_special"></td>
-                  <td><input type="text" class="form-control" name="profit_waste"></td>
-                  <td><input type="text" class="form-control" name="profit_adjust"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-
-          <!-- 施工内容新規入力 -->
-          <div class="mb-4">
-            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#constructionModal">
-              施工内容新規入力
-            </button>
-          </div>
-          <div class="table-responsive construction-scroll">
-            <table class="table table-bordered align-middle text-center">
-              <thead class="table-secondary">
-                <tr>
-                  <th>操作</th>
-                  <th>No</th>
-                  <th>項目</th>
-                  <th>灯用</th>
-                  <th>台数/本数</th>
-                  <th>単位</th>
-                  <th>内容</th>
-                  <th>本数</th>
-                  <th>基本単価</th>
-                  <th>
-                    昼間
-                    <br>
-                    <input type="checkbox" class="coeffCheck" data-type="day">
-                  </th>
-                  <th>
-                    夜間
-                    <br>
-                    <input type="checkbox" class="coeffCheck" data-type="night">
-                  </th>
-                  <th>
-                    高所
-                    <br>
-                    <input type="checkbox" class="coeffCheck" data-type="high">
-                  </th>
-                  <th>
-                    特殊
-                    <br>
-                    <input type="checkbox" class="coeffCheck" data-type="special">
-                  </th>
-                  <th>
-                    産廃等
-                    <br>
-                    <input type="checkbox" class="coeffCheck" data-type="waste">
-                  </th>
-                  <th>
-                    微調整
-                    <br>
-                    <input type="checkbox" class="coeffCheck" data-type="adjust">
-                  </th>
-                  <th>確定単価</th>
-                  <th>小計</th>
-                  <th>係数</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colspan="19">データ未入力</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="small text-danger fw-bold">※実際の経費・見積入力。見積依頼はしたか？</p>
-
-
-          <hr class="section-divider">
-
-          <!-- 単価 -->
-          <div class="mb-5">
-            <h4 class="fw-bold">単価</h4>
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label fw-bold">人工・外注費
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※合計の人件費を合計して自動入力されます。
-                    ※人工・外注費÷提出見積金額を％で表示します。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">高所作業車等
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                    title="※高所作業車等÷提出見積金額を％で表示します。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">商品・器具
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※A材:照明器具・空調器具・商品等の入り値合計して自動入力されます。
+              <label class="form-label fw-bold">商品・器具
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※A材:照明器具・空調器具・商品等の入り値合計して自動入力されます。
                     ※商品・器具÷提出見積金額を％で表示します。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">産廃
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※提出見積金額が10万円以上の場合は、その2%を1,000円単位で四捨五入して表示し、10万円未満の場合は一律で1,000円とします。
+              </label>
+              <input type="text" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">産廃
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※提出見積金額が10万円以上の場合は、その2%を1,000円単位で四捨五入して表示し、10万円未満の場合は一律で1,000円とします。
                     ※産廃÷提出見積金額を％で表示します。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">諸経費+B材
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※交通費や宿泊費などの全体の合計に、B材:電材購入等の入値合計の金額を足して表示します。
+              </label>
+              <input type="text" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">諸経費+B材
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※交通費や宿泊費などの全体の合計に、B材:電材購入等の入値合計の金額を足して表示します。
                     ※諸経費+B材÷提出見積金額を表示します。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">アーク利益
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※提出見積金額-(人口・外注費+高所作業車等+商品・器具+産廃+諸経費+B材+)を表示する。
+              </label>
+              <input type="text" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">アーク利益
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※提出見積金額-(人口・外注費+高所作業車等+商品・器具+産廃+諸経費+B材+)を表示する。
                     ※ｱｰｸ利益÷提出見積金額を％で表示する。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">報酬金(10万円以上時)
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※ｱｰｸ利益が10万円以上のとき、1%を1,000円単位で切り捨てて表示します。10万円未満は空白。
+              </label>
+              <input type="text" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">報酬金(10万円以上時)
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※ｱｰｸ利益が10万円以上のとき、1%を1,000円単位で切り捨てて表示します。10万円未満は空白。
                     ※ｱｰｸ利益が10万円以上のときに、報酬金÷ ｱｰｸ利益の割合を表示します。それ未満のときは空白。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">工事のみ
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                    title="※見積webでA材・非常灯・照明器具にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)を表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。
+              </label>
+              <input type="text" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">工事のみ
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                  title="※見積webでA材・非常灯・照明器具にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)を表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。
                     ※見積webでA材・非常灯・照明器具にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)÷(労務・諸経費+高所作業車等+値引き)を％で表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">商品のみ
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※A材:照明器具・空調器具 商品等の入値合計の利益を表示します。
+              </label>
+              <input type="text" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">商品のみ
+                <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※A材:照明器具・空調器具 商品等の入値合計の利益を表示します。
                     ※A材・非常灯・照明器具にチェックが入って場合、A材:照明器具・空調器具 商品等の入値合計の利益÷金額の合計を％で表示します。空白の場合は空白のままにします。"></i>
-                </label>
-                <input type="text" class="form-control">
-              </div>
-            </div>
-          </div>
-
-          <hr class="section-divider">
-
-          <!-- 備考 -->
-          <div class="mt-3">
-            <p class="fw-bold">
-              ※最低金額は、平日：<span class="text-danger fw-bold">45,000円</span><br>
-              ※参考：職人基本単価・<span class="text-danger fw-bold">28,000円</span>(交通費込み：さいたま・東京)・<span
-                class="text-danger fw-bold">25,000円</span>(交通費別：さいたま・東京以外)<br>
-              ※現調5万円以下は5,000円に統一する。<br>
-              ※宿泊:平日:7,500円・宿泊:休日:10,000円(金・土)
-            </p>
-          </div>
-
-
-          <!-- 工事日数-->
-          <div class="table-responsive mb-4">
-            <table class="table table-bordered text-center custom-table">
-              <thead>
-                <tr>
-                  <th class="table-secondary">工事日数</th>
-                  <th class="table-secondary" colspan="5">アーク</th>
-                  <th class="table-secondary" colspan="5">外注</th>
-                  <th class="light-gray-bg">現調</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- 1行目（入力欄） -->
-                <tr>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                  <td><input type="text" class="form-control" list="workerList"></td>
-                </tr>
-
-                <!-- 以下、11行分 -->
-                <tr>
-                  <th class="table-secondary">種類</th>
-                  <td><input list="typeList" class="form-control" name="type1"></td>
-                  <td><input list="typeList" class="form-control" name="type2"></td>
-                  <td><input list="typeList" class="form-control" name="type3"></td>
-                  <td><input list="typeList" class="form-control" name="type4"></td>
-                  <td><input list="typeList" class="form-control" name="type5"></td>
-                  <td><input list="typeList" class="form-control" name="type6"></td>
-                  <td><input list="typeList" class="form-control" name="type7"></td>
-                  <td><input list="typeList" class="form-control" name="type8"></td>
-                  <td><input list="typeList" class="form-control" name="type9"></td>
-                  <td><input list="typeList" class="form-control" name="type10"></td>
-                  <td><input list="typeList" class="form-control" name="type11"></td>
-                </tr>
-
-                <datalist id="typeList">
-                  <option value="代人">
-                  <option value="職長">
-                  <option value="職人">
-                  <option value="空調">
-                  <option value="手元">
-                </datalist>
-
-                <tr>
-                  <th class="table-secondary">単価</th>
-                  <td><input list="priceList" class="form-control" name="price1"></td>
-                  <td><input list="priceList" class="form-control" name="price2"></td>
-                  <td><input list="priceList" class="form-control" name="price3"></td>
-                  <td><input list="priceList" class="form-control" name="price4"></td>
-                  <td><input list="priceList" class="form-control" name="price5"></td>
-                  <td><input list="priceList" class="form-control" name="price6"></td>
-                  <td><input list="priceList" class="form-control" name="price7"></td>
-                  <td><input list="priceList" class="form-control" name="price8"></td>
-                  <td><input list="priceList" class="form-control" name="price9"></td>
-                  <td><input list="priceList" class="form-control" name="price10"></td>
-                  <td><input list="priceList" class="form-control" name="price11"></td>
-                </tr>
-
-                <datalist id="priceList">
-                  <option value="40000">
-                  <option value="35000">
-                  <option value="30000">
-                  <option value="28000">
-                  <option value="25000">
-                  <option value="24000">
-                  <option value="23000">
-                  <option value="20000">
-                  <option value="19000">
-                  <option value="18000">
-                  <option value="10000">
-                </datalist>
-
-                <tr>
-                  <th class="table-secondary">合計</th>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                </tr>
-                <tr>
-                  <th class="light-gray-bg">交通費</th>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                </tr>
-                <tr>
-                  <th class="light-gray-bg">宿泊費</th>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                </tr>
-                <tr>
-                  <th class="light-gray-bg">材料費</th>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                </tr>
-                <tr>
-                  <th class="light-gray-bg">その他</th>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                  <td><input type="text" class="form-control"></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="mb-4">
-            <h4 class="fw-bold">工事日数</h4>
-
-            <div class="container py-5">
-              <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#workDaysModal">
-                工事日数新規入力
-              </button>
-            </div>
-
-            <div class="table-responsive custom-scroll">
-              <table class="table table-bordered text-center custom-table" id="workdaysTable">
-                <thead>
-                  <tr>
-                    <!-- 17列。背景グレーのセルに class="table-secondary" を付ける -->
-                    <th class="table-secondary">操作</th>
-                    <th class="table-secondary">日数/人数</th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th><input type="text" class="form-control custom-input"></th>
-                    <th class="table-secondary">1日目標</th>
-                    <th class="table-secondary">完了目標</th>
-                    <th class="table-secondary">一人当たり</th>
-                    <th class="table-secondary">予定工事日</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colspan="17">データ未入力</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- モーダル：施工内容新規入力 -->
-          <div class="modal fade" id="constructionModal" tabindex="-1" aria-labelledby="constructionModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="constructionModalLabel">施工内容新規入力</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-                </div>
-                <div class="modal-body">
-                  <hr class="section-divider">
-
-                  <form id="constructionForm">
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <label class="form-label required">項目名</label>
-                        <select class="form-control" name="itemName" required>
-                          <option value="">選択してください</option>
-                          <option value="照明40W">照明40W</option>
-                          <option value="照明20W">照明20W</option>
-                          <option value="照明10W">照明10W</option>
-                          <option value="照明110W">照明110W</option>
-                          <option value="照明 水銀灯">照明 水銀灯</option>
-                          <option value="照明 投光器">照明 投光器</option>
-                          <option value="照明 ｺﾝﾊﾟｸﾄ">照明 ｺﾝﾊﾟｸﾄ</option>
-                          <option value="照明 ﾀﾞｳﾝﾗｲﾄ">照明 ﾀﾞｳﾝﾗｲﾄ</option>
-                          <option value="照明 ｽﾎﾟｯﾄﾗｲﾄ">照明 ｽﾎﾟｯﾄﾗｲﾄ</option>
-                          <option value="照明 ｼｰﾘﾝｸﾞ">照明 ｼｰﾘﾝｸﾞ</option>
-                          <option value="照明 ﾌﾞﾗｹｯﾄ">照明 ﾌﾞﾗｹｯﾄ</option>
-                          <option value="照明 その他">照明 その他</option>
-                          <option value="非常灯">非常灯</option>
-                          <option value="誘導灯">誘導灯</option>
-                          <option value="階段誘導灯">階段誘導灯</option>
-                          <option value="電球">電球</option>
-                          <option value="駐車場">駐車場</option>
-                        </select>
-                      </div>
-
-                      <div class="col-md-6">
-                        <label class="form-label">灯用</label>
-                        <input type="text" class="form-control" name="lightUse">
-                      </div>
-                    </div>
-
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <label class="form-label required">台数/本数</label>
-                        <input type="number" class="form-control" name="quantity" required>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label required">単位</label>
-                        <select class="form-control" id="unitSelect" name="unit" required>
-                          <option value="">選択してください</option>
-                          <option value="台">台</option>
-                          <option value="式">式</option>
-                          <option value="ｾｯﾄ">ｾｯﾄ</option>
-                          <option value="個">個</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <label class="form-label required">内容</label>
-                        <select class="form-control" id="contentSelect" name="content" required>
-                          <option value="">選択してください</option>
-                          <option value="結線工事">結線工事</option>
-                          <option value="交換工事">交換工事</option>
-                          <option value="新規工事">新規工事</option>
-                          <option value="撤去工事">撤去工事</option>
-                          <option value="交換作業">交換作業</option>
-                          <option value="その他工事">その他工事</option>
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <label class="form-label">本数
-                          <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            title="※見積webで工事種類が電気工事なら、灯用×台数/本数を表示し、空調工事と灯用が空白の場合は、空白を表示します。"></i>
-                        </label>
-                        <input type="number" class="form-control" name="count">
-                      </div>
-                    </div>
-
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <label class="form-label">基本単価
-                          <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
-                            data-bs-placement="top" title="※項目が「照明 40W」または「照明 20W」の場合、内容に応じて金額(交換工事:3,500円/その他:1,500円)を自動入力します。
-                            ※それ以外の項目は、E2が「空調工事」の場合のみ、データ元(M列:項目、N列:金額)から該当金額を取得。空調工事でない場合は0円を設定します。"></i>
-                        </label>
-                        <input type="text" class="form-control" name="basePrice">
-                      </div>
-                    </div>
-
-                    <div class="row mb-3">
-                      <div class="col-md-2">
-                        <label class="form-label">昼間</label>
-                        <input type="number" step="any" class="form-control profit-input" name="profit_day">
-                      </div>
-                      <div class="col-md-2">
-                        <label class="form-label">夜間</label>
-                        <input type="number" step="any" class="form-control profit-input" name="profit_night">
-                      </div>
-                      <div class="col-md-2">
-                        <label class="form-label">高所</label>
-                        <input type="number" step="any" class="form-control profit-input" name="profit_high">
-                      </div>
-                      <div class="col-md-2">
-                        <label class="form-label">特殊</label>
-                        <input type="number" step="any" class="form-control profit-input" name="profit_special">
-                      </div>
-                      <div class="col-md-2">
-                        <label class="form-label">産廃等</label>
-                        <input type="number" step="any" class="form-control profit-input" name="profit_waste">
-                      </div>
-                      <div class="col-md-2">
-                        <label class="form-label">微調整</label>
-                        <input type="number" step="any" class="form-control profit-input" name="profit_adjust">
-                      </div>
-                    </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label">確定単価（合計）
-                      <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                        title="※基本単価+昼間+夜間+高所+特殊+産廃等+微調整を足した金額を表示します。"></i>
-                    </label>
-                    <input type="number" class="form-control totalConfirmedPrice" name="fixedPrice" readonly>
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">小計
-                    <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                      title="※確定単価×台数/本数の金額を表示します。"></i>
-                  </label>
-                  <input type="text" class="form-control" id="subtotalDisplay" readonly>
-                </div>
-
-                <div class="form-check mt-3">
-                  <input class="form-check-input" type="checkbox" id="coefficientCheck" name="coefficient">
-                  <label class="form-check-label" for="coefficientCheck">係数</label>
-                </div>
-
-                <div class="text-center mt-4">
-                  <button type="submit" class="btn btn-warning px-4">登録完了</button>
-                </div>
-                </form>
-              </div>
+              </label>
+              <input type="text" class="form-control">
             </div>
           </div>
         </div>
 
+        <hr class="section-divider">
 
-        <!-- 工事日数新規入力 -->
-        <div class="modal fade" id="workDaysModal" tabindex="-1" aria-labelledby="workDaysModalLabel"
+        <!-- 備考 -->
+        <div class="mt-3">
+          <p class="fw-bold">
+            ※最低金額は、平日：<span class="text-danger fw-bold">45,000円</span><br>
+            ※参考：職人基本単価・<span class="text-danger fw-bold">28,000円</span>(交通費込み：さいたま・東京)・<span
+              class="text-danger fw-bold">25,000円</span>(交通費別：さいたま・東京以外)<br>
+            ※現調5万円以下は5,000円に統一する。<br>
+            ※宿泊:平日:7,500円・宿泊:休日:10,000円(金・土)
+          </p>
+        </div>
+
+
+        <!-- 工事日数-->
+        <div class="table-responsive mb-4">
+          <table class="table table-bordered text-center custom-table">
+            <thead>
+              <tr>
+                <th class="table-secondary">工事日数</th>
+                <th class="table-secondary" colspan="5">アーク</th>
+                <th class="table-secondary" colspan="5">外注</th>
+                <th class="light-gray-bg">現調</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- 1行目（入力欄） -->
+              <tr>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+                <td><input type="text" class="form-control" list="workerList"></td>
+              </tr>
+
+              <!-- 以下、11行分 -->
+              <tr>
+                <th class="table-secondary">種類</th>
+                <td><input list="typeList" class="form-control" name="type1"></td>
+                <td><input list="typeList" class="form-control" name="type2"></td>
+                <td><input list="typeList" class="form-control" name="type3"></td>
+                <td><input list="typeList" class="form-control" name="type4"></td>
+                <td><input list="typeList" class="form-control" name="type5"></td>
+                <td><input list="typeList" class="form-control" name="type6"></td>
+                <td><input list="typeList" class="form-control" name="type7"></td>
+                <td><input list="typeList" class="form-control" name="type8"></td>
+                <td><input list="typeList" class="form-control" name="type9"></td>
+                <td><input list="typeList" class="form-control" name="type10"></td>
+                <td><input list="typeList" class="form-control" name="type11"></td>
+              </tr>
+
+              <datalist id="typeList">
+                <option value="代人">
+                <option value="職長">
+                <option value="職人">
+                <option value="空調">
+                <option value="手元">
+              </datalist>
+
+              <tr>
+                <th class="table-secondary">単価</th>
+                <td><input list="priceList" class="form-control" name="price1"></td>
+                <td><input list="priceList" class="form-control" name="price2"></td>
+                <td><input list="priceList" class="form-control" name="price3"></td>
+                <td><input list="priceList" class="form-control" name="price4"></td>
+                <td><input list="priceList" class="form-control" name="price5"></td>
+                <td><input list="priceList" class="form-control" name="price6"></td>
+                <td><input list="priceList" class="form-control" name="price7"></td>
+                <td><input list="priceList" class="form-control" name="price8"></td>
+                <td><input list="priceList" class="form-control" name="price9"></td>
+                <td><input list="priceList" class="form-control" name="price10"></td>
+                <td><input list="priceList" class="form-control" name="price11"></td>
+              </tr>
+
+              <datalist id="priceList">
+                <option value="40000">
+                <option value="35000">
+                <option value="30000">
+                <option value="28000">
+                <option value="25000">
+                <option value="24000">
+                <option value="23000">
+                <option value="20000">
+                <option value="19000">
+                <option value="18000">
+                <option value="10000">
+              </datalist>
+
+              <tr>
+                <th class="table-secondary">合計</th>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+              </tr>
+              <tr>
+                <th class="light-gray-bg">交通費</th>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+              </tr>
+              <tr>
+                <th class="light-gray-bg">宿泊費</th>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+              </tr>
+              <tr>
+                <th class="light-gray-bg">材料費</th>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+              </tr>
+              <tr>
+                <th class="light-gray-bg">その他</th>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+                <td><input type="text" class="form-control"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mb-4">
+          <h4 class="fw-bold">工事日数</h4>
+
+          <div class="container py-5">
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#workDaysModal">
+              工事日数新規入力
+            </button>
+          </div>
+
+          <div class="table-responsive custom-scroll">
+            <table class="table table-bordered text-center custom-table" id="workdaysTable">
+              <thead>
+                <tr>
+                  <!-- 17列。背景グレーのセルに class="table-secondary" を付ける -->
+                  <th class="table-secondary">操作</th>
+                  <th class="table-secondary">日数/人数</th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th><input type="text" class="form-control custom-input"></th>
+                  <th class="table-secondary">1日目標</th>
+                  <th class="table-secondary">完了目標</th>
+                  <th class="table-secondary">一人当たり</th>
+                  <th class="table-secondary">予定工事日</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="17">データ未入力</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- モーダル：施工内容新規入力 -->
+        <div class="modal fade" id="constructionModal" tabindex="-1" aria-labelledby="constructionModalLabel"
           aria-hidden="true">
           <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="workDaysModalLabel">工事日数新規入力</h5>
+                <h5 class="modal-title" id="constructionModalLabel">施工内容新規入力</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
               </div>
               <div class="modal-body">
+                <hr class="section-divider">
+
+                <form id="constructionForm">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label required">項目名</label>
+                      <select class="form-control" name="itemName" required>
+                        <option value="">選択してください</option>
+                        <option value="照明40W">照明40W</option>
+                        <option value="照明20W">照明20W</option>
+                        <option value="照明10W">照明10W</option>
+                        <option value="照明110W">照明110W</option>
+                        <option value="照明 水銀灯">照明 水銀灯</option>
+                        <option value="照明 投光器">照明 投光器</option>
+                        <option value="照明 ｺﾝﾊﾟｸﾄ">照明 ｺﾝﾊﾟｸﾄ</option>
+                        <option value="照明 ﾀﾞｳﾝﾗｲﾄ">照明 ﾀﾞｳﾝﾗｲﾄ</option>
+                        <option value="照明 ｽﾎﾟｯﾄﾗｲﾄ">照明 ｽﾎﾟｯﾄﾗｲﾄ</option>
+                        <option value="照明 ｼｰﾘﾝｸﾞ">照明 ｼｰﾘﾝｸﾞ</option>
+                        <option value="照明 ﾌﾞﾗｹｯﾄ">照明 ﾌﾞﾗｹｯﾄ</option>
+                        <option value="照明 その他">照明 その他</option>
+                        <option value="非常灯">非常灯</option>
+                        <option value="誘導灯">誘導灯</option>
+                        <option value="階段誘導灯">階段誘導灯</option>
+                        <option value="電球">電球</option>
+                        <option value="駐車場">駐車場</option>
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label">灯用</label>
+                      <input type="text" class="form-control" name="lightUse">
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label required">台数/本数</label>
+                      <input type="number" class="form-control" name="quantity" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label required">単位</label>
+                      <select class="form-control" id="unitSelect" name="unit" required>
+                        <option value="">選択してください</option>
+                        <option value="台">台</option>
+                        <option value="式">式</option>
+                        <option value="ｾｯﾄ">ｾｯﾄ</option>
+                        <option value="個">個</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label required">内容</label>
+                      <select class="form-control" id="contentSelect" name="content" required>
+                        <option value="">選択してください</option>
+                        <option value="結線工事">結線工事</option>
+                        <option value="交換工事">交換工事</option>
+                        <option value="新規工事">新規工事</option>
+                        <option value="撤去工事">撤去工事</option>
+                        <option value="交換作業">交換作業</option>
+                        <option value="その他工事">その他工事</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">本数
+                          <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                          title="※見積webで工事種類が電気工事なら、灯用×台数/本数を表示し、空調工事と灯用が空白の場合は、空白を表示します。"></i>
+                      </label>
+                      <input type="number" class="form-control" name="count">
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">基本単価
+                          <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="※項目が「照明 40W」または「照明 20W」の場合、内容に応じて金額(交換工事:3,500円/その他:1,500円)を自動入力します。
+                            ※それ以外の項目は、E2が「空調工事」の場合のみ、データ元(M列:項目、N列:金額)から該当金額を取得。空調工事でない場合は0円を設定します。"></i>
+                      </label>
+                      <input type="text" class="form-control" name="basePrice">
+                    </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-md-2">
+                      <label class="form-label">昼間</label>
+                      <input type="number" step="any" class="form-control profit-input" name="profit_day">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">夜間</label>
+                      <input type="number" step="any" class="form-control profit-input" name="profit_night">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">高所</label>
+                      <input type="number" step="any" class="form-control profit-input" name="profit_high">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">特殊</label>
+                      <input type="number" step="any" class="form-control profit-input" name="profit_special">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">産廃等</label>
+                      <input type="number" step="any" class="form-control profit-input" name="profit_waste">
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">微調整</label>
+                      <input type="number" step="any" class="form-control profit-input" name="profit_adjust">
+                    </div>
+                  </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">確定単価（合計）
+                    <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="※基本単価+昼間+夜間+高所+特殊+産廃等+微調整を足した金額を表示します。"></i>
+                  </label>
+                  <input type="number" class="form-control totalConfirmedPrice" name="fixedPrice" readonly>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">小計
+                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="※確定単価×台数/本数の金額を表示します。"></i>
+                </label>
+                <input type="text" class="form-control" id="subtotalDisplay" readonly>
+              </div>
+
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" id="coefficientCheck" name="coefficient">
+                <label class="form-check-label" for="coefficientCheck">係数</label>
+              </div>
+
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-warning px-4">登録完了</button>
+              </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 工事日数新規入力 -->
+        <div class="modal fade" id="workDaysModal" tabindex="-1" aria-labelledby="workDaysModalLabel"
+          aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="workDaysModalLabel">工事日数新規入力</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+            </div>
+            <div class="modal-body">
+
+              <hr class="section-divider">
+
+              <form>
+
+                <!-- アーク -->
+                <h6 class="mb-3">アーク</h6>
+                <div class="row mb-4">
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="arc1" placeholder="アーク作業員1">
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="arc2" placeholder="アーク作業員2">
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="arc3" placeholder="アーク作業員3">
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="arc4" placeholder="アーク作業員4">
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="arc5" placeholder="アーク作業員5">
+                  </div>
+                </div>
+
 
                 <hr class="section-divider">
 
-                <form>
-
-                  <!-- アーク -->
-                  <h6 class="mb-3">アーク</h6>
-                  <div class="row mb-4">
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="arc1" placeholder="アーク作業員1">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="arc2" placeholder="アーク作業員2">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="arc3" placeholder="アーク作業員3">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="arc4" placeholder="アーク作業員4">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="arc5" placeholder="アーク作業員5">
-                    </div>
+                <!-- 外注 -->
+                <h6 class="mb-3">外注</h6>
+                <div class="row mb-4">
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="sub1" placeholder="外注作業員1">
                   </div>
-
-
-                  <hr class="section-divider">
-
-                  <!-- 外注 -->
-                  <h6 class="mb-3">外注</h6>
-                  <div class="row mb-4">
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="sub1" placeholder="外注作業員1">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="sub2" placeholder="外注作業員2">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="sub3" placeholder="外注作業員3">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="sub4" placeholder="外注作業員4">
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <input list="workerList" class="form-control" name="sub5" placeholder="外注作業員5">
-                    </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="sub2" placeholder="外注作業員2">
                   </div>
-
-                  <datalist id="workerList">
-                    <option value="平林信通">
-                    <option value="曽根智也">
-                    <option value="榛野成">
-                    <option value="深田裕一">
-                    <option value="什伸電気">
-                    <option value="什伸電気(青木)">
-                    <option value="什伸電気(菊池)">
-                    <option value="内田貴大">
-                    <option value="細川直人">
-                    <option value="小林敦">
-                    <option value="峰岸">
-                    <option value="藤原淳">
-                    <option value="ｼｹﾞﾄｳﾃﾞﾝｷ">
-                    <option value="ｺｰﾜｰｶｰｽﾞ">
-                    <option value="YDENTSU">
-                    <option value="和光電設">
-                    <option value="副島敬弘">
-                    <option value="針谷良幸">
-                    <option value="仮職人">
-                  </datalist>
-
-
-                  <hr class="section-divider">
-
-                  <!-- その他 -->
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label class="form-label">1日目標
-                        <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                          title="※日数に応じて、総数÷工事日数が自動入力されます。日数が空白の場合は空白を表示します。"></i>
-                      </label>
-                      <input type="text" class="form-control" name="goal1" placeholder="1日目標">
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label">完了目標
-                        <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                          title="※1日目標がそのまま自動入力されます。空白の場合は空白を表示します。"></i>
-                      </label>
-                      <input type="text" class="form-control" name="goalTotal" placeholder="完了目標">
-                    </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="sub3" placeholder="外注作業員3">
                   </div>
-
-                  <div class="row mb-4">
-                    <div class="col-md-6">
-                      <label class="form-label">1人当たり
-                        <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                          title="※平林信道なら1日目標÷(人数-1)、それ以外は1日目標÷人数を表示します。人数が0以下の場合は空白を表示します。"></i>
-                      </label>
-                      <input type="text" class="form-control" name="perPerson" placeholder="一人当たり">
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label">予定工事日
-                        <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                          title="※予定工事日が入力されている場合はその翌日を表示し、未入力の場合は空白を表示します。"></i>
-                      </label>
-                      <input type="text" class="form-control" name="plannedDate" placeholder="予定工事日">
-                    </div>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="sub4" placeholder="外注作業員4">
                   </div>
-
-                  <!-- ボタン -->
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-warning px-5">登録完了</button>
+                  <div class="col-md-6 mb-2">
+                    <input list="workerList" class="form-control" name="sub5" placeholder="外注作業員5">
                   </div>
+                </div>
 
-                </form>
-              </div>
+                <datalist id="workerList">
+                  <option value="平林信通">
+                  <option value="曽根智也">
+                  <option value="榛野成">
+                  <option value="深田裕一">
+                  <option value="什伸電気">
+                  <option value="什伸電気(青木)">
+                  <option value="什伸電気(菊池)">
+                  <option value="内田貴大">
+                  <option value="細川直人">
+                  <option value="小林敦">
+                  <option value="峰岸">
+                  <option value="藤原淳">
+                  <option value="ｼｹﾞﾄｳﾃﾞﾝｷ">
+                  <option value="ｺｰﾜｰｶｰｽﾞ">
+                  <option value="YDENTSU">
+                  <option value="和光電設">
+                  <option value="副島敬弘">
+                  <option value="針谷良幸">
+                  <option value="仮職人">
+                </datalist>
+
+
+                <hr class="section-divider">
+
+                <!-- その他 -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">1日目標
+                      <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="※日数に応じて、総数÷工事日数が自動入力されます。日数が空白の場合は空白を表示します。"></i>
+                    </label>
+                    <input type="text" class="form-control" name="goal1" placeholder="1日目標">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">完了目標
+                      <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="※1日目標がそのまま自動入力されます。空白の場合は空白を表示します。"></i>
+                    </label>
+                    <input type="text" class="form-control" name="goalTotal" placeholder="完了目標">
+                  </div>
+                </div>
+
+                <div class="row mb-4">
+                  <div class="col-md-6">
+                    <label class="form-label">1人当たり
+                      <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="※平林信道なら1日目標÷(人数-1)、それ以外は1日目標÷人数を表示します。人数が0以下の場合は空白を表示します。"></i>
+                    </label>
+                    <input type="text" class="form-control" name="perPerson" placeholder="一人当たり">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">予定工事日
+                      <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="※予定工事日が入力されている場合はその翌日を表示し、未入力の場合は空白を表示します。"></i>
+                    </label>
+                    <input type="text" class="form-control" name="plannedDate" placeholder="予定工事日">
+                  </div>
+                </div>
+
+                <!-- ボタン -->
+                <div class="text-center">
+                  <button type="submit" class="btn btn-warning px-5">登録完了</button>
+                </div>
+
+              </form>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
   </div>
 
   </div>

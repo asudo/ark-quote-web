@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const orderNumberFull = document.getElementById('orderNumberFull'); // 出力先
 
     if (orderNumber2 !== "000000000") {
-      if (destination === "ricoh") {
+      if (destination === "リコージャパン株式会社") {
         orderNumberFull.value = `${orderNumber1}-JS${orderNumber2}`;
       } else {
         orderNumberFull.value = orderNumber2;
