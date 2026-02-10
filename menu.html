@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メニュー | 見積Web 統合版</title>
+    <link rel="stylesheet" href="menu_style.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="logo">ARK CRETON Inc.</div>
+        <button id="logoutBtn" onclick="handleLogout()">ログアウト</button>
+    </header>
+
+    <main class="menu-container">
+        <h1>見積管理ダッシュボード</h1>
+
+        <div class="menu-grid">
+            <a href="index.html" class="menu-card primary">
+                <div class="icon">➕</div>
+                <h2>新規作成</h2>
+                <p>新しい見積書を作成します</p>
+            </a>
+
+            <a href="#" class="menu-card success" onclick="alert('一覧画面は準備中です')">
+                <div class="icon">📋</div>
+                <h2>作成済一覧</h2>
+                <p>発行済みの見積を確認・編集します</p>
+            </a>
+
+            <a href="#" class="menu-card draft" onclick="alert('下書き機能は準備中です')">
+                <div class="icon">📝</div>
+                <h2>下書き</h2>
+                <p>保存中の未完成データを再開します</p>
+            </a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        &copy; 2026 ARK CRETON Inc.
+    </footer>
+
+    <script>
+        function handleLogout() {
+            if (confirm('ログアウトしますか？')) {
+                sessionStorage.removeItem("isLoggedIn");
+                window.location.href = "login.html";
+            }
+        }
+    </script>
+</body>
+
+</html>
