@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ログイン | 見積Web 統合版</title>
+    <title>ログイン | 見積Web</title>
     <link rel="stylesheet" href="login_style.css">
 </head>
 
@@ -19,12 +19,18 @@
             <form id="loginForm">
                 <div class="input-group">
                     <label for="userId">ユーザーID</label>
-                    <input type="text" id="userId" name="userId" placeholder="admin" required>
+                    <div class="input-with-icon">
+                        <span class="field-icon">👤</span>
+                        <input type="text" id="userId" name="userId" placeholder="admin" required>
+                    </div>
                 </div>
 
                 <div class="input-group">
                     <label for="password">パスワード</label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    <div class="input-with-icon">
+                        <span class="field-icon">🔒</span>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
                 </div>
 
                 <div class="error-area" id="errorMessage">
