@@ -13,15 +13,15 @@
         <div class="login-card">
             <div class="login-header">
                 <h1>Login</h1>
-                <p>ユーザーIDとパスワードを入力してください</p>
+                <p>メールアドレスとパスワードを入力してください</p>
             </div>
 
             <form id="loginForm">
                 <div class="input-group">
-                    <label for="userId">ユーザーID</label>
+                    <label for="userId">メールアドレス</label>
                     <div class="input-with-icon">
-                        <span class="field-icon">👤</span>
-                        <input type="text" id="userId" name="userId" placeholder="admin" required>
+                        <span class="field-icon">✉️</span>
+                        <input type="email" id="userId" name="userId" placeholder="email@example.com" required>
                     </div>
                 </div>
 
@@ -44,6 +44,10 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="login.js"></script>
 </body>
 
 </html>

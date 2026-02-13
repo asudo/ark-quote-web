@@ -1,9 +1,11 @@
+/* 全体の基本設定 */
 body {
     background-color: #f0f2f5;
     margin: 0;
     font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
+/* ヘッダーの設定 */
 .main-header {
     background-color: #ffffff;
     padding: 15px 40px;
@@ -19,6 +21,21 @@ body {
     color: #007bff;
 }
 
+/* 右側のエリア（名前＋ボタン） */
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+/* ★名前を表示する場所の設定 */
+.user-info {
+    color: #333333; /* 読みやすい濃いグレー */
+    margin-right: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+/* ログアウトボタン */
 #logoutBtn {
     background: none;
     border: 1px solid #dc3545;
@@ -26,6 +43,7 @@ body {
     padding: 6px 15px;
     border-radius: 4px;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 #logoutBtn:hover {
@@ -33,6 +51,7 @@ body {
     color: white;
 }
 
+/* メインコンテンツ */
 .menu-container {
     max-width: 1000px;
     margin: 60px auto;
@@ -63,6 +82,7 @@ body {
     box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* ★アイコンのサイズ設定 */
 .menu-card .icon {
     font-size: 45px;
     margin-bottom: 15px;
@@ -76,7 +96,6 @@ body {
 .menu-card p {
     font-size: 14px;
     color: #777;
-    margin-bottom: 0;
 }
 
 /* 各カードのアクセント線 */
@@ -102,4 +121,15 @@ body {
     font-size: 12px;
     color: #aaa;
     padding-bottom: 30px;
+}
+
+/* フェードインのアニメーション設定 */
+.user-info {
+    opacity: 0; /* 最初は隠しておく */
+    transition: opacity 0.8s ease-in-out; /* 0.8秒かけてふわっと出す */
+}
+
+/* このクラスがつくと表示される */
+.user-info.show {
+    opacity: 1;
 }

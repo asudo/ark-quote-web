@@ -11,7 +11,10 @@
 <body>
     <header class="main-header">
         <div class="logo">ARK CRETON Inc.</div>
-        <button id="logoutBtn" onclick="handleLogout()">ログアウト</button>
+        <div class="header-right">
+            <span id="userNameDisplay" class="user-info"></span>
+            <button id="logoutBtn" onclick="handleLogout()">ログアウト</button>
+        </div>
     </header>
 
     <main class="menu-container">
@@ -42,13 +45,52 @@
         &copy; 2026 ARK CRETON Inc.
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
     <script>
-        function handleLogout() {
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function checkAuth() {
+            try {
+                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+                if (authError || !user) {
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                const { data: userData, error: dbError } = await supabaseClient
+                    .from('user_master')
+                    .select('user_name')
+                    .eq('login_email', user.email)
+                    .single();
+
+                const nameDisplay = document.getElementById('userNameDisplay');
+
+                if (userData && userData.user_name) {
+                    // 1. 名前をセットする
+                    nameDisplay.innerText = userData.user_name + " さん";
+                    // 2. フェードインを開始させる！
+                    nameDisplay.classList.add('show');
+                } else {
+                    nameDisplay.innerText = user.email + " さん";
+                    nameDisplay.classList.add('show');
+                }
+
+            } catch (err) {
+                console.error("予期せぬエラーが発生しました:", err);
+            }
+        }
+
+        async function handleLogout() {
             if (confirm('ログアウトしますか？')) {
-                sessionStorage.removeItem("isLoggedIn");
+                await supabaseClient.auth.signOut();
                 window.location.href = "login.html";
             }
         }
+
+        checkAuth();
     </script>
 </body>
 
