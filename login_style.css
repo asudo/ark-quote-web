@@ -117,3 +117,44 @@ html {
     font-size: 12px;
     color: #aaa;
 }
+
+/* --- パスワード表示切替用の追加設定 --- */
+
+/* パスワード入力欄のみ、右側にアイコン用の余白（45px）を作る */
+#password {
+    padding-right: 45px;
+}
+
+/* 切り替えボタンのスタイル：右端に配置 */
+.toggle-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    color: #888; /* 控えめなグレー */
+    transition: color 0.2s, transform 0.1s;
+}
+
+/* ホバー時に少し濃く、クリック時に少し小さくして「押し心地」を出す */
+.toggle-btn:hover {
+    color: #333;
+}
+.toggle-btn:active {
+    transform: scale(0.9);
+}
+
+/* SVGアイコンのサイズ設定 */
+.icon-svg {
+    width: 20px;
+    height: 20px;
+    display: block; /* 余計な隙間を消す */
+}
+
+/* JSで切り替えるための非表示クラス */
+.hidden {
+    display: none;
+}

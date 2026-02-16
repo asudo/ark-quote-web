@@ -64,10 +64,7 @@
               </div>
               <div class="col-md-6">
                 <label for="creatorSelect" class="form-label required">作成者</label>
-                <select id="creatorSelect" name="creator" class="form-select" required>
-                  <option value="">選択してください</option>
-                  <option value="nb">平林 信通</option>
-                  <option value="ts">曽根 智也</option>
+                <select id="creatorSelect" class="form-select">
                 </select>
               </div>
               <div class="col-md-6">
@@ -1685,9 +1682,11 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- 個別JS -->
-  <script src="main_form1.js"></script>
   <script src="main_form2.js"></script>
   <script src="main_form3.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="main_form1.js"></script>
 </body>
 
 </html>

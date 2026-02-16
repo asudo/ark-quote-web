@@ -1,3 +1,4 @@
+let userMasterList = [];
 document.addEventListener("DOMContentLoaded", function () {
 
   // 割引チェックボックスと金額入力連動
@@ -242,21 +243,53 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 作成者選択による見積番号5の自動入力設定
-  function setupCreatorSelect() {
+  async function setupCreatorSelect() {
     const creatorSelect = document.getElementById("creatorSelect");
     const estimateNo5Input = document.getElementById("estimateNo5");
     if (!creatorSelect || !estimateNo5Input) return;
 
-    const creatorMap = {
-      nb: "NB",
-      ts: "TS",
-    };
+    // --- 1. Supabaseから有効なユーザーを取得 ---
+    const { data, error } = await supabaseClient
+      .from('user_master')
+      .select('user_name, user_initial')
+      .eq('is_active', true);
 
-    creatorSelect.addEventListener("change", function () {
-      estimateNo5Input.value = creatorMap[creatorSelect.value] || "";
+    if (error) {
+      console.error("ユーザー情報の取得に失敗:", error);
+      return;
+    }
+
+    userMasterList = data;
+    const savedName = sessionStorage.getItem('userName'); // ★ログイン画面で保存した名前を取得
+
+    // --- 2. プルダウンの生成 ---
+    creatorSelect.innerHTML = '<option value="">選択してください</option>';
+    userMasterList.forEach(user => {
+      const option = document.createElement('option');
+      option.value = user.user_name;
+      option.text = user.user_name;
+
+      // ★追加：保存された名前と一致したら、その人を選択状態にする
+      if (savedName && user.user_name === savedName) {
+        option.selected = true;
+      }
+
+      creatorSelect.appendChild(option);
     });
-  }
 
+    // --- 3. 連動処理（名前を選んだらイニシャルを入れる） ---
+    function syncInitial() {
+      const selectedUser = userMasterList.find(u => u.user_name === creatorSelect.value);
+      estimateNo5Input.value = selectedUser ? selectedUser.user_initial : "";
+
+      if (typeof updateEstimateNo === "function") updateEstimateNo();
+    }
+
+    creatorSelect.addEventListener("change", syncInitial);
+
+    // 初期状態でイニシャルをセット（初期値で選ばれた人のイニシャルが入る）
+    syncInitial();
+  }
 
   // 受取人＋担当者選択による見積番号6の自動入力設定
   function setupEstimateNo6() {
@@ -454,8 +487,8 @@ document.addEventListener("DOMContentLoaded", function () {
   setupCompanySelect();
   setupdestinationInput();
   setupEstimateNo3();
-  setupCreatorSelect();
-  setupEstimateNo6(); // ← ← ← ★★★ これを追加！！
+  setupCreatorSelect().catch(err => console.error(err));
+  setupEstimateNo6();
 
   // ページ読み込み時に今日の日付をセット
   const estDateInput = document.getElementById("estimateDate");
