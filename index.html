@@ -42,7 +42,6 @@
 
       <!-- 🔹 form1の内容（見積） -->
       <div class="tab-pane fade show active" id="form1" role="tabpanel" aria-labelledby="form1-tab">
-        <!-- form1.html の <body> の中身をそのまま貼り付け（container なしでOK） -->
         <h1 class="text-center mb-4">見積web</h1>
         <p class="text-center text-muted small">
           通常はすべての項目を入力してください。<br>
@@ -64,7 +63,8 @@
               </div>
               <div class="col-md-6">
                 <label for="creatorSelect" class="form-label required">作成者</label>
-                <select id="creatorSelect" class="form-select">
+                <select id="creatorSelect" class="form-select" required>
+                  <option value="">読み込み中...</option>
                 </select>
               </div>
               <div class="col-md-6">
@@ -72,34 +72,6 @@
                 <input type="text" id="destinationInput" name="destination" class="form-control" list="destinationList"
                   placeholder="会社名を入力または選択" required>
                 <datalist id="destinationList">
-                  <option value="リコージャパン株式会社">
-                  <option value="株式会社サイホー">
-                  <option value="株式会社奥本いろは堂">
-                  <option value="株式会社カナデン">
-                  <option value="株式会社リブ・ネクスト">
-                  <option value="株式会社新日通">
-                  <option value="株式会社GNE">
-                  <option value="株式会社ウム・ヴェルト・ジャパン">
-                  <option value="ウム・ヴェルト株式会社">
-                  <option value="株式会社力">
-                  <option value="エコ・トラスト・ジャパン株式会社">
-                  <option value="株式会社紀鳳産業">
-                  <option value="コイズミ照明株式会社">
-                  <option value="アイリスオーヤマ株式会社">
-                  <option value="株式会社遠藤照明">
-                  <option value="株式会社ルクス">
-                  <option value="株式会社エコプラン">
-                  <option value="岩崎電気株式会社">
-                  <option value="株式会社関電工">
-                  <option value="東光電気工事株式会社">
-                  <option value="株式会社TKテクノサービス">
-                  <option value="株式会社ティーネットジャパン">
-                  <option value="株式会社三井造船昭島研究所">
-                  <option value="ダイキンHVACソリューション東京株式会社">
-                  <option value="有限会社南信堂">
-                  <option value="株式会社リバティ">
-                  <option value="株式会社フジクラエンジニアリング">
-                  <option value="イーシームズ株式会社">
                 </datalist>
               </div>
 
@@ -110,6 +82,7 @@
                 <datalist id="contactOptions">
                 </datalist>
               </div>
+            </div>
           </fieldset>
 
           <hr class="section-divider">
@@ -171,7 +144,6 @@
           <fieldset class="mb-4">
             <legend>工事情報</legend>
             <div class="row g-3">
-
               <div class="col-12 mb-2">
                 <label class="form-label required d-block">工事種類</label>
                 <div class="d-flex gap-4">
@@ -331,7 +303,7 @@
 
           <!-- 注文情報 -->
           <fieldset class="mb-4 d-none" id="orderSection">
-            <legend>注文情報</legend>
+            <legend>注文情報（リコージャパン専用）</legend>
             <div class="row g-3">
               <div class="col-md-6">
                 <label for="orderFromSelect" class="form-label">＊注文元</label>
@@ -373,7 +345,6 @@
               <input type="checkbox" id="discountCheck" name="discountCheck" class="form-check-input">
             </div>
           </div>
-
           <div class="col-md-3">
             <label for="discountAmount" class="form-label visually-hidden">値引き金額</label>
             <div class="input-group mt-4">
@@ -597,7 +568,7 @@
         </div>
       </div>
 
-           <!-- 🔹 form4の内容（B材） -->
+      <!-- 🔹 form4の内容（B材） -->
       <div class="tab-pane fade" id="form4" role="tabpanel" aria-labelledby="form4-tab">
         <!-- form4.html の <body> の中身をそのまま貼り付け（container なしでOK） -->
         <div class="row justify-content-center">
