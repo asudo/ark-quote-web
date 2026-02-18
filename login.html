@@ -16,12 +16,12 @@
                 <p>メールアドレスとパスワードを入力してください</p>
             </div>
 
-            <form id="loginForm">
+            <form id="loginForm" novalidate>
                 <div class="input-group">
                     <label for="userId">メールアドレス</label>
                     <div class="input-with-icon">
                         <span class="field-icon">✉️</span>
-                        <input type="email" id="userId" name="userId" placeholder="email@example.com" required>
+                        <input type="email" id="userId" name="userId" placeholder="example@company.co.jp" required>
                     </div>
                 </div>
 
@@ -48,11 +48,18 @@
                     </div>
                 </div>
 
-                <div class="error-area" id="errorMessage">
-                </div>
+                <div class="error-area" id="errorMessage"></div>
 
                 <button type="submit" class="login-btn">ログイン</button>
             </form>
+
+            <div class="signup-link-area" style="text-align: center; margin-top: 20px;">
+                <p style="font-size: 0.9em; color: #666; line-height: 1.6;">
+                    アカウントをお持ちでないですか？<br>
+                    <a href="signup.html"
+                        style="color: #4a90e2; text-decoration: none; font-weight: bold;">新規アカウント登録（仮登録）</a>
+                </p>
+            </div>
 
             <div class="login-footer">
                 <p>&copy; 2026 ARK CRETON Inc.</p>

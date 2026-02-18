@@ -3,7 +3,7 @@ body,
 html {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
     background-color: #f4f7f9;
 }
@@ -14,7 +14,9 @@ html {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
+    padding: 40px 0;
+    box-sizing: border-box;
 }
 
 /* カードのデザイン */
@@ -25,7 +27,7 @@ html {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 400px;
-    box-sizing: border-box; /* パディングを含めたサイズ計算 */
+    box-sizing: border-box;
 }
 
 .login-header h1 {
@@ -55,6 +57,21 @@ html {
     font-size: 14px;
 }
 
+/* ラベル横の注釈スタイル（見出しのグレー #666 に合わせる） */
+.input-group label small {
+    color: #666;
+    font-weight: normal;
+    font-size: 12px;
+    margin-left: 5px;
+    transition: color 0.2s, font-weight 0.2s;
+}
+
+/* 入力欄にカーソルがある時、そのグループの注釈を濃くする */
+.input-group:focus-within label small {
+    color: #333 !important;
+    font-weight: bold;
+}
+
 .input-with-icon {
     position: relative;
     display: flex;
@@ -64,24 +81,26 @@ html {
 .field-icon {
     position: absolute;
     left: 12px;
-    color: #aaa; /* グレーの絵文字 */
+    color: #aaa;
     font-size: 16px;
-    pointer-events: none; 
+    pointer-events: none;
 }
 
 .input-group input {
     width: 100%;
-    padding: 12px 12px 12px 40px; 
+    padding: 12px 12px 12px 40px;
     box-sizing: border-box;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 16px;
-    transition: border-color 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
 
+/* フォーカス時の色を青に */
 .input-group input:focus {
     outline: none;
     border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 /* ボタン */
@@ -102,13 +121,35 @@ html {
     background-color: #0056b3;
 }
 
-/* エラー表示 */
+/* エラー表示：アラートボックスデザイン */
 .error-area {
-    color: #d9534f;
     font-size: 13px;
-    margin-bottom: 15px;
-    min-height: 18px;
-    text-align: center;
+    margin-bottom: 20px;
+    min-height: 0;
+    text-align: left; /* リスト表示のため左寄せ */
+    border-radius: 4px;
+    display: none; /* 初期状態は非表示。JSでactiveクラスを付与して表示 */
+    box-sizing: border-box;
+}
+
+/* エラーがある時のスタイル（JSでactiveクラスを切り替え） */
+.error-area.active {
+    display: block !important; /* 強制的に表示 */
+    background-color: #fdeaea;
+    border: 1px solid #d9534f;
+    color: #d9534f;
+    padding: 12px 16px;
+}
+
+/* ボックス内の箇条書きスタイル */
+.error-area ul {
+    margin: 8px 0 0 0;
+    padding-left: 18px;
+}
+
+.error-area li {
+    list-style: disc; 
+    line-height: 1.6;
 }
 
 .login-footer {
@@ -120,8 +161,9 @@ html {
 
 /* --- パスワード表示切替用の追加設定 --- */
 
-/* パスワード入力欄のみ、右側にアイコン用の余白（45px）を作る */
-#password {
+/* パスワード入力欄は右側にボタン用の余白を作る */
+input#password, 
+input#confirmPassword {
     padding-right: 45px;
 }
 
@@ -135,14 +177,16 @@ html {
     padding: 0;
     display: flex;
     align-items: center;
-    color: #888; /* 控えめなグレー */
+    color: #888;
     transition: color 0.2s, transform 0.1s;
+    z-index: 5;
 }
 
 /* ホバー時に少し濃く、クリック時に少し小さくして「押し心地」を出す */
 .toggle-btn:hover {
     color: #333;
 }
+
 .toggle-btn:active {
     transform: scale(0.9);
 }
@@ -151,10 +195,30 @@ html {
 .icon-svg {
     width: 20px;
     height: 20px;
-    display: block; /* 余計な隙間を消す */
+    display: block;
 }
 
 /* JSで切り替えるための非表示クラス */
 .hidden {
     display: none;
+}
+
+/* 登録中... のドットアニメーション */
+.loading-dots::after {
+    content: '';
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
+}
+
+/* ボタンを無効化（処理中）した時のスタイル */
+.login-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
 }

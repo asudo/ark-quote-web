@@ -1,23 +1,20 @@
 let userMasterList = [];
 let customerMaster = [];
 let customerContactMaster = [];
-let orderOriginMaster = [];
 
 document.addEventListener("DOMContentLoaded", async function () {
 
   // --- 1. Supabaseから全マスタデータを取得 ---
   async function loadDatabaseMasters() {
     try {
-      const [custRes, contactRes, originRes, userRes] = await Promise.all([
+      const [custRes, contactRes, userRes] = await Promise.all([
         supabaseClient.from('customer_master').select('*'),
         supabaseClient.from('customer_contact_master').select('*'),
-        supabaseClient.from('order_origin_master').select('*'),
         supabaseClient.from('user_master').select('*').eq('is_active', true)
       ]);
 
       customerMaster = custRes.data || [];
       customerContactMaster = contactRes.data || [];
-      orderOriginMaster = originRes.data || [];
       userMasterList = userRes.data || [];
 
       initializeForm();
@@ -33,13 +30,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     const destInput = document.getElementById("destinationInput");
     const estNo2 = document.getElementById("estimateNo2");
     const contactDatalist = document.getElementById("contactOptions");
-    const orderSection = document.getElementById("orderSection");
 
     const selectedCompanyName = destInput.value.trim();
     const customer = customerMaster.find(c => c.customer_name === selectedCompanyName);
 
-    // 【見積番号2】会社コード取得
-    estNo2.value = customer ? customer.customer_initial : "";
+    // --- 【見積番号2】 ---
+    if (customer) {
+      // マスタにあればそのイニシャル
+      estNo2.value = customer.customer_initial;
+    } else if (selectedCompanyName !== "") {
+      // マスタにないが、何か入力されている場合は「ETC」
+      estNo2.value = "ETC";
+    } else {
+      // 空欄なら空
+      estNo2.value = "";
+    }
 
     // 【担当者リスト】datalistの更新
     contactDatalist.innerHTML = "";
@@ -57,95 +62,43 @@ document.addEventListener("DOMContentLoaded", async function () {
     optUnknown.value = "不明";
     contactDatalist.appendChild(optUnknown);
 
-    // 【リコー判定】
-    if (orderSection) {
-      orderSection.classList.toggle("d-none", selectedCompanyName !== "リコージャパン株式会社");
-    }
-
     handleContactChange();
-    updateOrderNumberFull();
   }
 
   // B. 担当者 or 注文元 変更時 -> 【見積番号6】
   function handleContactChange() {
     const destInput = document.getElementById("destinationInput");
     const contactInput = document.getElementById("contactInput");
-    const orderSourceSelect = document.getElementById("orderFromSelect");
     const estNo6Input = document.getElementById("estimateNo6");
 
     const selectedCompanyName = destInput.value.trim();
     const selectedContactName = contactInput.value.trim();
-    const selectedOrderOriginName = orderSourceSelect.options[orderSourceSelect.selectedIndex]?.text;
 
     let initial = "";
 
-    if (selectedCompanyName === "リコージャパン株式会社") {
-      // --- リコー専用ロジック：拠点 + 担当者 ---
-      const originMatch = orderOriginMaster.find(o => o.origin_name === selectedOrderOriginName);
-      const originInitial = originMatch ? originMatch.origin_initial : "";
+    // 会社がマスタにあるか確認
+    const customer = customerMaster.find(c => c.customer_name === selectedCompanyName);
 
-      let personInitial = "Y"; // 担当者不明時はY
-      const customer = customerMaster.find(c => c.customer_name === selectedCompanyName);
-      if (customer) {
-        const contact = customerContactMaster.find(c =>
-          c.customer_id === customer.id && c.contact_name === selectedContactName
-        );
-        if (contact) {
-          personInitial = contact.contact_initial;
-        }
-      }
-      // 拠点コードがある場合は結合（TYなど）、ない場合はYY
-      initial = originInitial ? (originInitial + personInitial) : "YY";
-
-    } else {
-      // --- 通常得意先のロジック：DBのイニシャルを優先 ---
-      const customer = customerMaster.find(c => c.customer_name === selectedCompanyName);
-      if (customer) {
-        const contact = customerContactMaster.find(c =>
-          c.customer_id === customer.id && c.contact_name === selectedContactName
-        );
-        if (contact) {
-          initial = contact.contact_initial; // 1文字でもそのまま入る
-        }
+    if (customer) {
+      // 会社がマスタにある場合、その会社の担当者を探す
+      const contact = customerContactMaster.find(c =>
+        c.customer_id === customer.id && c.contact_name === selectedContactName
+      );
+      if (contact) {
+        initial = contact.contact_initial;
       }
     }
 
-    // 最終的に何も決まらなければ「YY」
-    estNo6Input.value = initial || "YY";
-  }
-
-  // C. 注文元変更時 -> 注文番号1
-  function updateOrderNumber1() {
-    const orderFromSelect = document.getElementById("orderFromSelect");
-    const orderNumber1 = document.getElementById("orderNumber1");
-    const orderNumberMap = {
-      tokyo: "408", gunma: "305", nisitokyo: "403",
-      kanagawa: "405", chiba: "401", saitama: "304"
-    };
-    orderNumber1.value = orderNumberMap[orderFromSelect.value] || "";
-    handleContactChange();
-    updateOrderNumberFull();
-  }
-
-  // D. 注文番号(フル)の組み立て
-  function updateOrderNumberFull() {
-    const destination = document.getElementById('destinationInput').value.trim();
-    const no1 = document.getElementById('orderNumber1').value.trim();
-    const no2 = document.getElementById('orderNumber2').value.trim();
-    const orderNumberFull = document.getElementById('orderNumberFull');
-
-    if (no2 !== "" && !/^0+$/.test(no2)) {
-      if (destination === "リコージャパン株式会社") {
-        orderNumberFull.value = `${no1}-JS${no2}`;
-      } else {
-        orderNumberFull.value = no2;
-      }
+    // 最終的にイニシャルが決まらない（手入力や不明）場合は「YY」
+    // ただし、担当者名すら入力されていない場合は空
+    if (selectedContactName === "") {
+      estNo6Input.value = "";
     } else {
-      orderNumberFull.value = "";
+      estNo6Input.value = initial || "YY";
     }
   }
 
-  // E. 割引チェック
+  // c. 割引チェック
   function setupDiscountToggle() {
     const discountCheck = document.getElementById("discountCheck");
     const discountAmount = document.getElementById("discountAmount");
@@ -158,7 +111,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     toggle();
   }
 
-  // F. 工事種類連動
+  // D. 産業廃棄物とマニフェストの連動
+  function setupSanpaiToggle() {
+    const sanpaiNone = document.getElementById("sanpai_none");
+    const sanpaiExists = document.getElementById("sanpai_exists");
+    const manifestoRadios = document.querySelectorAll("input[name='manifestoStatus']");
+
+    const toggle = () => {
+      const isExists = sanpaiExists.checked;
+      manifestoRadios.forEach(radio => {
+        // 「あり」の時だけ活性化
+        radio.disabled = !isExists;
+        // 「なし」に戻った時は「不要」に強制リセット
+        if (!isExists && radio.id === "manifesto_none") {
+          radio.checked = true;
+        }
+      });
+    };
+
+    sanpaiNone.addEventListener("change", toggle);
+    sanpaiExists.addEventListener("change", toggle);
+    toggle(); // 初期化
+  }
+
+  // E. 工事種類連動
   function setupWorkContent() {
     const workContent = document.getElementById("workContent");
     const koujiRadios = document.querySelectorAll("input[name='koujiType']");
@@ -242,13 +218,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     setupDiscountToggle();
     setupWorkContent();
+    setupSanpaiToggle();
   }
 
   // --- 4. イベント登録 ---
   document.getElementById("destinationInput")?.addEventListener("input", handleDestinationChange);
   document.getElementById("contactInput")?.addEventListener("input", handleContactChange);
-  document.getElementById("orderFromSelect")?.addEventListener("change", updateOrderNumber1);
-  document.getElementById("orderNumber2")?.addEventListener("input", updateOrderNumberFull);
   document.getElementById("creatorSelect")?.addEventListener("change", syncCreatorInitial);
 
   loadDatabaseMasters();
