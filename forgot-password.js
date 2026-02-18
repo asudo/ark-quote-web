@@ -19,9 +19,13 @@ forgotForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = '送信中...';
     
     try {
+        /**
+         * 【重要修正】GitHub Pagesのリポジトリ名を含めたフルURLを指定します
+         */
+        const resetURL = 'https://asudo.github.io/ark-quote-web/update-password.html';
+
         const { error } = await _supabase.auth.resetPasswordForEmail(email, {
-            // パスワードを実際に更新する画面のURL（次に作る画面）
-            redirectTo: window.location.origin + '/update-password.html',
+            redirectTo: resetURL,
         });
 
         if (error) throw error;
@@ -32,7 +36,12 @@ forgotForm.addEventListener('submit', async (e) => {
 
     } catch (err) {
         console.error(err);
-        showStatus("⚠️ 送信に失敗しました。<br>" + err.message, "error");
+        // エラー内容が英語の場合があるので、分かりやすく表示
+        let userMsg = err.message;
+        if (err.message.includes("rate limit")) {
+            userMsg = "短時間に何度も送信できません。少し時間を置いてからお試しください。";
+        }
+        showStatus("⚠️ 送信に失敗しました。<br>" + userMsg, "error");
         submitBtn.disabled = false;
         submitBtn.textContent = '再設定メールを送信';
     }
@@ -50,9 +59,15 @@ function showStatus(msg, type) {
         errorMessage.style.color = "#28a745"; // 緑色
         errorMessage.style.backgroundColor = "#e8f5e9";
         errorMessage.style.border = "1px solid #28a745";
+        errorMessage.style.padding = "10px";
+        errorMessage.style.borderRadius = "4px";
+        errorMessage.style.marginBottom = "15px";
     } else {
         errorMessage.style.color = "#d9534f"; // 赤色
-        errorMessage.style.backgroundColor = "";
-        errorMessage.style.border = "";
+        errorMessage.style.backgroundColor = "#fdecea";
+        errorMessage.style.border = "1px solid #d9534f";
+        errorMessage.style.padding = "10px";
+        errorMessage.style.borderRadius = "4px";
+        errorMessage.style.marginBottom = "15px";
     }
 }
