@@ -1,4 +1,11 @@
 // update-password.js
+(function () {
+    if (window.location.href.includes('&amp;')) {
+        const fixedUrl = window.location.href.replace(/&amp;/g, '&');
+        console.log("URLを修復しました:", fixedUrl);
+        window.location.replace(fixedUrl);
+    }
+})();
 const _supabase = window.supabaseClient;
 
 const updateForm = document.getElementById('updateForm');
@@ -37,7 +44,7 @@ function updateErrorDisplay(messages) {
 function checkMatch() {
     // 注釈要素を取得
     const hint = passwordInput.closest('.input-group').querySelector('small');
-    
+
     if (rawConfirmPassword.length === 0) {
         confirmPasswordInput.style.border = '';
         return;
@@ -47,7 +54,7 @@ function checkMatch() {
     if (rawPassword === rawConfirmPassword && rawPassword.length >= 6) {
         confirmPasswordInput.style.border = '';
         updateErrorDisplay('');
-        
+
         // ★重要：JS側からの指定を「空」にすることで、CSSの :focus-within に任せる
         if (hint) {
             hint.style.color = '';
