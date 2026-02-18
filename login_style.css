@@ -57,7 +57,7 @@ html {
     font-size: 14px;
 }
 
-/* ラベル横の注釈スタイル（見出しのグレー #666 に合わせる） */
+/* --- ラベル横の注釈：通常時 --- */
 .input-group label small {
     color: #666;
     font-weight: normal;
@@ -66,10 +66,10 @@ html {
     transition: color 0.2s, font-weight 0.2s;
 }
 
-/* 入力欄にカーソルがある時、そのグループの注釈を濃くする */
+/* --- 入力欄にカーソルがある時、そのグループの注釈を濃くする */
 .input-group:focus-within label small {
-    color: #333 !important;
-    font-weight: bold;
+    color: #444 !important;      
+    font-weight: 500 !important;  
 }
 
 .input-with-icon {
@@ -126,15 +126,13 @@ html {
     font-size: 13px;
     margin-bottom: 20px;
     min-height: 0;
-    text-align: left; /* リスト表示のため左寄せ */
+    text-align: left;
     border-radius: 4px;
-    display: none; /* 初期状態は非表示。JSでactiveクラスを付与して表示 */
-    box-sizing: border-box;
+    display: none;
 }
 
-/* エラーがある時のスタイル（JSでactiveクラスを切り替え） */
 .error-area.active {
-    display: block !important; /* 強制的に表示 */
+    display: block !important;
     background-color: #fdeaea;
     border: 1px solid #d9534f;
     color: #d9534f;
@@ -160,10 +158,10 @@ html {
 }
 
 /* --- パスワード表示切替用の追加設定 --- */
-
-/* パスワード入力欄は右側にボタン用の余白を作る */
 input#password, 
-input#confirmPassword {
+input#confirmPassword,
+input#new_pw,
+input#conf_pw {
     padding-right: 45px;
 }
 
@@ -221,4 +219,21 @@ input#confirmPassword {
     background-color: #ccc;
     cursor: not-allowed;
     transform: none;
+}
+
+.forgot-password-container {
+    text-align: left;
+    margin-top: 8px;
+    margin-bottom: 5px;
+}
+
+.signup-link-style {
+    color: #4a90e2;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.signup-link-style:hover {
+    text-decoration: underline;
 }
