@@ -1,17 +1,20 @@
-// update-password.js
+/**
+ * 1. URL修復ロジック（最優先で実行）
+ * メールのリンクが &amp; で壊れている場合、正しい & に置換してリロード
+ */
 (function () {
     if (window.location.href.includes('&amp;')) {
         const fixedUrl = window.location.href.replace(/&amp;/g, '&');
-        console.log("URLを修復しました:", fixedUrl);
+        console.log("URL修復中...", fixedUrl);
         window.location.replace(fixedUrl);
     }
 })();
-const _supabase = window.supabaseClient;
 
+const _supabase = window.supabaseClient;
 const updateForm = document.getElementById('updateForm');
 const errorMessage = document.getElementById('errorMessage');
 
-// HTML側のID変更（new_pw / conf_pw）に合わせる
+// HTML側のID
 const passwordInput = document.getElementById('new_pw');
 const confirmPasswordInput = document.getElementById('conf_pw');
 
@@ -23,7 +26,7 @@ let maskTimeoutP = null;
 let maskTimeoutC = null;
 
 /**
- * 1. エラー表示（signup.jsと統一）
+ * 2. エラー表示ヘルパー
  */
 function updateErrorDisplay(messages) {
     if (messages && messages.length > 0) {
@@ -32,36 +35,32 @@ function updateErrorDisplay(messages) {
         errorMessage.innerHTML = `⚠️ <span style="font-weight:bold;">入力内容を確認してください</span><ul>${listItems}</ul>`;
         errorMessage.classList.add('active');
         errorMessage.style.color = ERROR_COLOR;
+        errorMessage.style.display = 'block';
     } else {
         errorMessage.innerHTML = '';
         errorMessage.classList.remove('active');
+        errorMessage.style.display = 'none';
     }
 }
 
 /**
- * 2. 一致チェック（★CSSの挙動を邪魔しないのがコツ）
+ * 3. パスワード一致チェック
  */
 function checkMatch() {
-    // 注釈要素を取得
     const hint = passwordInput.closest('.input-group').querySelector('small');
-
     if (rawConfirmPassword.length === 0) {
         confirmPasswordInput.style.border = '';
         return;
     }
 
-    // 正常な場合（一致 ＆ 6文字以上）
     if (rawPassword === rawConfirmPassword && rawPassword.length >= 6) {
         confirmPasswordInput.style.border = '';
         updateErrorDisplay('');
-
-        // ★重要：JS側からの指定を「空」にすることで、CSSの :focus-within に任せる
         if (hint) {
             hint.style.color = '';
             hint.style.fontWeight = '';
         }
     } else {
-        // 異常時（不一致）のみ、JSが赤く強制上書き
         confirmPasswordInput.style.border = `2px solid ${ERROR_COLOR}`;
         if (hint) {
             hint.style.color = ERROR_COLOR;
@@ -71,7 +70,7 @@ function checkMatch() {
 }
 
 /**
- * 3. 伏せ字入力制御（signup.jsのロジックを完全再現）
+ * 4. 伏せ字入力制御
  */
 function handlePasswordInput(inputEl, currentRaw, setRaw, timerType) {
     const currentVal = inputEl.value;
@@ -113,7 +112,7 @@ confirmPasswordInput.addEventListener('input', () => {
 });
 
 /**
- * 4. 送信処理
+ * 5. パスワード更新（本番処理）
  */
 updateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -127,7 +126,6 @@ updateForm.addEventListener('submit', async (e) => {
 
     if (rawPassword !== rawConfirmPassword) {
         errors.push("パスワードが一致しません。");
-        confirmPasswordInput.style.border = `2px solid ${ERROR_COLOR}`;
     }
 
     if (errors.length > 0) {
@@ -140,20 +138,31 @@ updateForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = '更新中...';
 
     try {
+        // セッションが確立されているか確認
+        const { data: { session }, error: sessionError } = await _supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+            // セッションがない場合（直リンクなど）はURLから復帰を試みる
+            // 通常、Supabaseはハッシュ(#)の中のアクセストークンを自動で拾いますが
+            // 念のためエラーを具体的出します
+            throw new Error("認証セッションが見つかりません。メールのリンクから再度やり直してください。");
+        }
+
+        // パスワード更新実行
         const { error } = await _supabase.auth.updateUser({ password: rawPassword });
         if (error) throw error;
 
-        alert("パスワードを更新しました。新しいパスワードでログインしてください。");
+        alert("✅ パスワードを更新しました。新しいパスワードでログインしてください。");
         window.location.href = "login.html";
+
     } catch (err) {
         console.error(err);
-        updateErrorDisplay("更新に失敗しました: " + err.message);
+        updateErrorDisplay("⚠️ 更新に失敗しました: " + err.message);
         submitBtn.disabled = false;
         submitBtn.textContent = 'パスワードを更新';
     }
 });
 
-// ページ読み込み時の強制初期化（ブラウザキャッシュ対策）
 window.addEventListener('load', () => {
     const hint = passwordInput.closest('.input-group').querySelector('small');
     if (hint) {
