@@ -16,7 +16,7 @@ let isMaskedP = true;
 let isMaskedC = true;
 
 /**
- * 1. エラー表示（視覚的なガイドを強化）
+ * 1. エラー表示
  */
 function updateErrorDisplay(messages) {
     if (messages && messages.length > 0) {
@@ -24,9 +24,8 @@ function updateErrorDisplay(messages) {
         const msgArray = Array.isArray(messages) ? messages : [messages];
         const listItems = msgArray.map(msg => `<li>${msg}</li>`).join('');
 
-        // 既存のCSS（.error-area.active）のスタイルを活かす構造に統一
         errorMessage.innerHTML = `⚠️ <span style="font-weight:bold;">入力内容を確認してください</span><ul>${listItems}</ul>`;
-        
+
         // CSSのクラス「active」を付与して「display: block」を有効にする
         errorMessage.classList.add('active');
         errorMessage.style.display = 'block';
@@ -134,7 +133,7 @@ confirmPasswordInput.addEventListener('input', () => {
 });
 
 /**
- * 4. 送信処理（具体的な解決策を提示）
+ * 4. 送信処理
  */
 updateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -168,8 +167,22 @@ updateForm.addEventListener('submit', async (e) => {
     } catch (err) {
         console.error(err);
         let errMsg = err.message;
-        if (errMsg.includes("same as old")) errMsg = "現在のパスワードとは異なるものを入力してください。";
-        updateErrorDisplay(["更新に失敗しました: " + errMsg]);
+
+        // 判定ロジックを強化
+        if (errMsg.includes("different from the old") || errMsg.includes("same as old")) {
+            errMsg = "現在のパスワードとは異なるものを入力してください。";
+        } else if (errMsg.includes("weak_password") || errMsg.includes("should be at least")) {
+            errMsg = "パスワードが簡単すぎるか、短すぎます。";
+        } else if (errMsg.includes("session_expired") || errMsg.includes("not found")) {
+            errMsg = "再設定の期限が切れた可能性があります。もう一度最初からやり直してください。";
+        } else {
+            // 予期せぬエラー（英語）の場合は、最低限「失敗した」ことを日本語で伝える
+            errMsg = "エラーが発生しました。時間を置いて再度お試しください。(" + errMsg + ")";
+        }
+
+        // 統一されたエラー表示を呼び出す
+        updateErrorDisplay([errMsg]);
+
         submitBtn.disabled = false;
         submitBtn.textContent = 'パスワードを更新';
     }
