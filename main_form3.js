@@ -48,8 +48,10 @@ function setupMaterialForm(prefix) {
 
     const rowHtml = `
       <td>
-        <button type="button" class="editBtn btn btn-sm btn-success" style="background-color: green; color: white;">編集</button>
-        <button type="button" class="deleteBtn btn btn-sm btn-danger" style="background-color: red; color: white;">削除</button>
+        <div class="d-flex justify-content-center gap-1">
+          <button type="button" class="editBtn">編集</button>
+          <button type="button" class="deleteBtn">削除</button>
+        </div>
       </td>
       <td>${editRow ? editRow.children[1].textContent : itemCount++}</td>
       <td>${data.name}</td><td>${data.spec}</td><td>${data.quantity}</td><td>${data.unit}</td>

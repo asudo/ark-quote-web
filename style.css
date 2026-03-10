@@ -1,271 +1,388 @@
-/* 見積 */
-/* 必須ラベルの装飾 */
-label.required::after {
-  content: "（必須）";
-  color: red;
-  font-size: 0.85em;
-  margin-left: 4px;
-}
+/* ==========================================================================
+   1. 基本設定・入力フォームの共通スタイル
+   ========================================================================== */
 
-/* 小さな説明文のサイズ */
-.text-note {
-  font-size: 0.85em;
-  color: #0d6efd;
-  /* Bootstrapのprimaryカラー（青） */
-}
-
-/* Chrome, Safari, Edge 対応 */
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Firefox 対応 */
-input[type=number] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-  /* モダンな標準対応 */
-}
-
-/* 線 */
-.section-divider {
-  border: none;
-  border-top: 2px solid #000000;
-  /* 黒色で太さ2pxの実線 */
-  margin: 2rem 0;
-}
-
-.form-check-label {
-  margin-left: 0.25rem;
-}
-
-/* A材・B材 */
-/* テーブルの高さ制限とスクロール */
-.table-responsive {
-  max-height: auto;
-  overflow-y: auto;
-}
-
-/* 編集ボタン　*/
-.editBtn {
-  background-color: #4CAF50;
-  /* 緑 */
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-/* 削除ボタン　*/
-.deleteBtn {
-  background-color: #f44336;
-  /* 赤 */
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-.editBtn:hover {
-  background-color: #45a049;
-}
-
-.deleteBtn:hover {
-  background-color: #da190b;
-}
-
-#totalCostRate {
-  min-width: 100px;
-}
-
-.total-summary-box {
-  background-color: #f8f9fa;
-  /* Bootstrapの .bg-light と同じ */
-  text-align: right;
-  border: 1px solid #ced4da;
-  border-radius: 0.375rem;
-  /* Bootstrap風の角丸 */
-  padding: 0.375rem 0.75rem;
-  /* Bootstrapの .p-2 相当 */
-  min-height: 38px;
-  /* Bootstrapの .form-control 高さ相当 */
-  line-height: 1.5;
-}
-
-/* 施工内容 */
-/* テーブル全体のスタイル */
-.highwork-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-/* 見出し行の背景をグレーに */
-.highwork-table thead th {
-  background-color: #e0e0e0;
-  /* 薄めのグレー */
-  padding: 8px;
-  border: 1px solid #ccc;
-  text-align: center;
-}
-
-/* テーブルのセルにボーダー */
-.highwork-table td {
-  border: 1px solid #ccc;
-  padding: 4px;
-}
-
-/* 入力フォームのスタイル */
-.form-control {
-  width: 100%;
-  padding: 4px;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-/* テーブルの親ラッパー */
-.table-wrapper {
-  overflow-x: auto;
-  margin-bottom: 20px;
-}
-
-
-.unit-column {
-  min-width: 60px;
-}
-
-.input-block {
-  min-width: auto;
-  /* 幅を広くしたい場合ここを調整 */
-  flex-grow: 1;
-  /* 空いてる幅にも広がるように */
-}
-
-/* 工事日数の表一つ目 */
-/* 背景色 */
-
-.light-gray-bg {
-  background-color: #7d7b7b;
-}
-
-/* テーブル入力欄 */
-.custom-table input.form-control {
-  font-size: 14px;
-  padding: 4px;
-}
-
-/* 親コンテナの中央寄せ */
-.form-container {
-  justify-content: center;
-}
-
-/* 入力欄の幅を固定 */
-.input-wrapper {
-  width: 300px;
-}
-
-.custom-input {
-  height: 48px;
-  min-width: 120px;
-  font-size: 14px;
-}
-
-.custom-table {
-  min-width: 1200px;
-}
-
-.construction-scroll {
- overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.construction-scroll table {
-  min-width: 1500px; 
-}
-
-.editing-row {
-  background-color: #d4edda !important;
-}
-
-/* ツールチップ */
-.question-icon {
-  color: rgb(143, 182, 249);
-  cursor: pointer;
-}
-
-/* 全てのラベルを「施工内容」側の太さに強制統一 */
+/* ラベルの太さとデザインの統一 */
 .form-label {
-    font-weight: 700 !important; 
-    color: #212529;             
-    font-size: 0.95rem;         
+    font-weight: 700 !important;
+    color: #212529;
+    font-size: 0.95rem;
     display: inline-block;
     margin-bottom: 0.5rem;
 }
 
-/* 必須マーク（required）の調整 */
-.required::after {
-    content: " *";
-    color: #e63946;
-    font-weight: bold;
+/* 必須ラベルの装飾 */
+label.required::after {
+    content: "（必須）";
+    color: red;
+    font-size: 0.85em;
+    margin-left: 4px;
 }
 
-/* 入力欄 */
-.form-control, .form-select {
-    font-weight: 400; 
+/* 入力欄の基本設定 */
+.form-control,
+.form-select {
+    width: 100%;
+    padding: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-weight: 400;
     border: 1px solid #ced4da;
 }
 
-/* 読み取り専用（readonly）を少しだけ濃くして読みやすく */
-.form-control[readonly] {
-    background-color: #f1f3f5;
-    color: #495057;
-    font-weight: 500;
+input.form-control[readonly],
+textarea.form-control[readonly] {
+    background-color: #f1f3f5 !important;
+    color: #495057 !important;
+    cursor: not-allowed;
+
 }
 
-/* テーブルのセル内をすべて上下中央揃えにする */
-.table th, .table td {
+/* 数値入力の矢印（スピンボタン）非表示設定 */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox 対応 */
+input[type=number] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* チェックボックスのラベル余白 */
+.form-check-label {
+    margin-left: 0.25rem;
+}
+
+/* ==========================================================================
+   2. レイアウト・補助パーツ
+   ========================================================================== */
+
+/* 区切り線 */
+.section-divider {
+    border: none;
+    border-top: 2px solid #000000;
+    margin: 2rem 0;
+}
+
+/* 小さな注釈 */
+.text-note {
+    font-size: 0.85em;
+    color: #0d6efd;
+}
+
+/* ツールチップアイコン */
+.question-icon {
+    color: rgb(143, 182, 249);
+    cursor: pointer;
+}
+
+/* 合計金額等のサマリーボックス */
+.total-summary-box {
+    background-color: #f8f9fa;
+    text-align: right;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    min-height: 38px;
+    line-height: 1.5;
+}
+
+/* フォームコンテナの調整 */
+.form-container {
+    justify-content: center;
+}
+
+.input-wrapper {
+    width: 300px;
+}
+
+.input-block {
+    min-width: auto;
+    flex-grow: 1;
+}
+
+.custom-input {
+    height: 48px;
+    min-width: 120px;
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   3. テーブル関連のスタイル
+   ========================================================================== */
+
+/* テーブル全体の共通デザイン */
+.table {
+    border-collapse: collapse !important;
+    border: 1px solid #dee2e6;
+}
+
+/* セルの上下中央揃え・余白 */
+.table th,
+.table td {
     vertical-align: middle !important;
-    white-space: nowrap; 
-    padding: 8px 4px;    
+    white-space: nowrap;
+    padding: 8px 4px;
 }
 
-/* 入力欄があるセルの調整 */
+/* テーブル内入力欄の微調整 */
 .table input.form-control {
     margin: 0;
     padding: 4px 8px;
-    height: auto; 
+    height: auto;
 }
 
-/* テーブル全体のデザイン統一 */
-.table {
-    border-collapse: collapse !important;
-    border: 1px solid #dee2e6; /
-}
-
-/* すべてのテーブルのヘッダー(th)をグレーで統一 */
-.table thead th, 
+/* ヘッダー(th)のデザイン統一 */
+.table thead th,
 .table thead td.table-secondary {
-    background-color: #e9ecef !important; 
-    color: #333 !important;               
-    border: 1px solid #dee2e6 !important; 
+    background-color: #e9ecef !important;
+    color: #333 !important;
+    border: 1px solid #dee2e6 !important;
     text-align: center;
     vertical-align: middle;
     font-weight: bold;
     padding: 8px 4px;
 }
 
-/* 「利益」や「工事日数」など、ヘッダーが2段になっている場合も考慮 */
+/* 2段構造のヘッダー背景 */
 .table thead tr th[colspan] {
-    background-color: #dee2e6 !important; 
+    background-color: #dee2e6 !important;
 }
 
-/* table-info クラスの背景を極限まで薄く上書きする */
-.table-custom-light {
-    background-color: #f0f7ff !important; 
+/* スクロール・幅の制限 */
+.table-responsive {
+    max-height: auto;
+    overflow-y: auto;
 }
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.construction-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 特定のテーブル・列の幅設定 */
+.custom-table {
+    min-width: 1200px;
+}
+
+.construction-scroll table {
+    min-width: 1500px;
+}
+
+.unit-column {
+    min-width: 60px;
+}
+
+/* 駐車場代などのカスタム行背景 */
+.table-custom-light {
+    background-color: #f0f7ff !important;
+}
+
 .table-custom-light td {
-    background-color: transparent !important; 
+    background-color: transparent !important;
+}
+
+/* 編集中の行ハイライト */
+.editing-row {
+    background-color: #d4edda !important;
+}
+
+/* 背景色ユーティリティ */
+.light-gray-bg {
+    background-color: #7d7b7b;
+}
+
+/* 高所作業車テーブル（レガシー定義の維持） */
+.highwork-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.highwork-table thead th {
+    background-color: #e0e0e0;
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+.highwork-table td {
+    border: 1px solid #ccc;
+    padding: 4px;
+}
+
+/* ==========================================================================
+   工事日数表：最終レイアウト調整
+   ========================================================================== */
+
+/* 1. テーブル全体の幅 (150px + 125px * 10 = 1400px) */
+.custom-table,
+.attendance-table {
+    table-layout: fixed !important;
+    width: 1400px !important;
+    min-width: 1400px !important;
+    border-collapse: collapse !important;
+    border: none !important;
+}
+
+/* 2. 1列目（ラベル列）の幅を 150px に固定 */
+.custom-table th:first-child,
+.attendance-table .head-col {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    background-color: #e9ecef !important;
+    border: 1px solid #dee2e6 !important;
+    font-size: 0.85rem;
+}
+
+/* 3. データ列の幅を 125px に固定 */
+.custom-table td,
+.attendance-table td {
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    padding: 4px !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* 4. 入力エリアの調整 */
+.custom-table .form-control {
+    width: 100% !important;
+    height: 30px !important;
+    font-size: 0.85rem !important;
+    text-align: center;
+    border-radius: 2px !important;
+}
+
+/* 人数表のセルの高さ */
+.attendance-table td.attendance-cell,
+.attendance-table th.head-col {
+    height: 40px !important;
+    padding: 0 !important;
+    line-height: 40px !important;
+    vertical-align: middle !important;
+    overflow: hidden;
+
+}
+
+/* テーブル全体のレイアウトを固定 */
+.attendance-table {
+    table-layout: fixed;
+}
+
+/* --- 特殊な装飾 --- */
+
+/* アークと外注の区切り線（垂直2重線）を強制適用 */
+.attendance-table thead td.border-right-divider,
+.attendance-table td.border-right-divider,
+.custom-table th.border-right-divider,
+.custom-table td.border-right-divider {
+    border-right: 3px double #adb5bd !important;
+    box-shadow: 1px 0 0 #adb5bd;
+}
+
+/* 単価と合計の上の区切り線（水平2重線） */
+.border-double-top th,
+.border-double-top td {
+    border-top: 3px double #adb5bd !important;
+}
+
+/* アーク側の背景色（薄いオレンジ） */
+.bg-orange-row td:nth-child(n+2):nth-child(-n+6) {
+    background-color: #fff2cc !important;
+}
+
+/* 合計行の背景 */
+.row-total {
+    background-color: #f8f9fa !important;
+}
+
+/* スクロールエリア自体の枠線を消す */
+.table-responsive {
+    border: none !important;
+}
+
+#scroll-bottom .attendance-table {
+    table-layout: fixed !important;
+    width: 1400px !important;
+}
+
+#scroll-bottom .attendance-table .head-col {
+    width: 150px !important;
+    font-size: 0.85rem;
+}
+
+/* 下の「目標・予定」テーブル専用の上書き設定 */
+#target-schedule-body {
+    table-layout: auto !important;
+    width: 100% !important;
+}
+
+/* 下の表の1列目だけ、太字にして幅固定を解除する */
+#target-schedule-body th {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    background-color: #e9ecef !important;
+}
+
+/* 下の「目標・予定」テーブル：枠線の強制統一 */
+#target-schedule-body th,
+#target-schedule-body td {
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+    border-collapse: collapse !important;
+}
+
+/* 1列目のヘッダー部分の右側の線も細く統一 */
+#target-schedule-body th {
+    border-right: 1px solid #dee2e6 !important;
+}
+
+/* ==========================================================================
+   4. ボタン・操作系
+   ========================================================================== */
+
+/* 編集ボタン */
+.editBtn {
+    background-color: #3e8e41;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.editBtn:hover {
+    background-color: #45a049;
+}
+
+/* 削除ボタン */
+.deleteBtn {
+    background-color: #cb382d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.deleteBtn:hover {
+    background-color: #da190b;
+}
+
+/* その他パーツ */
+#totalCostRate {
+    min-width: 100px;
 }
