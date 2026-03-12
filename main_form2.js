@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // モーダルのタイトルとボタン名を変更
       const modalTitle = document.querySelector('#constructionModal .modal-title');
-      if (modalTitle) modalTitle.textContent = "施工内容：編集";
+      if (modalTitle) modalTitle.textContent = "編集中：施工内容";
       if (registerBtn) registerBtn.textContent = "更新完了";
 
       // --- 表のセルから入力欄へ値をコピー ---
@@ -801,9 +801,111 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ==========================================================================
+  // ★ 単価セクション（原価・利益計算）
+  // ==========================================================================
+  function updateUnitPriceSection() {
+    const getNum = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return 0;
+      return typeof parseCurrency === 'function' ? parseCurrency(el.value) : 0;
+    };
+
+    const setVal = (id, val, isPercent = false) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (isPercent) {
+        el.value = val.toFixed(1) + "%";
+      } else {
+        el.value = "￥" + Math.round(val).toLocaleString();
+      }
+    };
+
+    // 1. 提出見積金額を取得
+    const totalEstimate = getNum('finalEstimatedPrice');
+
+    // --- 2. 人工・外注費 ---
+    let totalLaborSum = 0;
+    const totalRow = document.querySelector('.row-total');
+    if (totalRow) {
+      totalRow.querySelectorAll('input').forEach(input => {
+        totalLaborSum += (parseFloat(input.value.replace(/[^0-9]/g, '')) || 0);
+      });
+    }
+    setVal('totalLaborCost', totalLaborSum);
+    setVal('laborCostPercentage', totalEstimate > 0 ? (totalLaborSum / totalEstimate * 100) : 0, true);
+
+    // --- 3. 産廃 ---
+    let wasteAmount = 0;
+    if (totalEstimate > 0) {
+      wasteAmount = totalEstimate >= 100000 ? Math.round((totalEstimate * 0.02) / 1000) * 1000 : 1000;
+    }
+    setVal('industrialWasteCost', wasteAmount);
+    setVal('industrialWastePercentage', totalEstimate > 0 ? (wasteAmount / totalEstimate * 100) : 0, true);
+
+    // --- 4. 諸経費＋B材 ---
+    const bAmount = getNum('displayMaterialB');
+    const transportRow = document.querySelector('.bg-orange-row:nth-of-type(3)');
+    const stayRow = document.querySelector('.bg-orange-row:nth-of-type(4)');
+    let arkOverheadSum = 0;
+    if (transportRow && stayRow) {
+      for (let i = 0; i < 5; i++) {
+        const transVal = parseFloat(transportRow.querySelectorAll('input')[i]?.value.replace(/[^0-9]/g, '')) || 0;
+        const stayVal = parseFloat(stayRow.querySelectorAll('input')[i]?.value.replace(/[^0-9]/g, '')) || 0;
+        arkOverheadSum += (transVal + stayVal);
+      }
+    }
+    const totalOverheadB = bAmount + arkOverheadSum;
+    setVal('overheadBMaterialCost', totalOverheadB);
+    setVal('overheadBMaterialPercentage', totalEstimate > 0 ? (totalOverheadB / totalEstimate * 100) : 0, true);
+
+    // --- 5. 高所作業車等 (HTMLのIDに合わせる) ---
+    const highWorkCost = typeof calculateHighWorkTotal === 'function' ? calculateHighWorkTotal() : 0;
+    setVal('highAltitudeVehicleCost', highWorkCost);
+    setVal('highAltitudeVehiclePercentage', totalEstimate > 0 ? (highWorkCost / totalEstimate * 100) : 0, true);
+
+    // --- 6. 商品・器具 (HTMLのIDに合わせる) ---
+    const productCost = getNum('displayMaterialA'); // A材の合計
+    setVal('productEquipmentCost', productCost);
+    setVal('productEquipmentPercentage', totalEstimate > 0 ? (productCost / totalEstimate * 100) : 0, true);
+
+    // --- 7. アーク利益 (HTMLのID: arcProfit, arcProfitPercentage に合わせる) ---
+    const totalCosts = totalLaborSum + wasteAmount + totalOverheadB + highWorkCost + productCost;
+    const profitAmount = totalEstimate > 0 ? (totalEstimate - totalCosts) : 0;
+
+    setVal('arcProfit', profitAmount);
+    setVal('arcProfitPercentage', totalEstimate > 0 ? (profitAmount / totalEstimate * 100) : 0, true);
+
+    // --- 8. 報酬金 ---
+    let reward = 0;
+    let rewardPct = 0;
+
+    // Excel式: =IF(T53>=100000, ROUNDDOWN(T53*0.01, -3), "")
+    // profitAmount(アーク利益)が10万円以上の時のみ計算
+    if (profitAmount >= 100000) {
+      // 1%を掛けてから1,000円単位で切り捨て
+      reward = Math.floor((profitAmount * 0.01) / 1000) * 1000;
+
+      // 報酬金 ÷ アーク利益
+      if (profitAmount > 0) {
+        rewardPct = (reward / profitAmount) * 100;
+      }
+    }
+
+    // 表示の反映（10万円未満なら空文字にする）
+    const rewardInput = document.getElementById('rewardAmount');
+    const rewardPctInput = document.getElementById('rewardPercentage');
+
+    if (rewardInput) {
+      rewardInput.value = profitAmount >= 100000 ? "￥" + reward.toLocaleString() : "";
+    }
+    if (rewardPctInput) {
+      rewardPctInput.value = profitAmount >= 100000 ? rewardPct.toFixed(1) + "%" : "";
+    }
+  }
+
+  // ==========================================================================
   // ★ 工事日数表（自動計算・集計・行操作）
   // ==========================================================================
-
   function updateFinancialTotals() {
     const unitPriceRow = document.querySelector('.row-unit-price');
     const transportRow = document.querySelector('.bg-orange-row:nth-of-type(3)'); // 交通費
@@ -816,6 +918,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const countText = targetTd.textContent.replace(/[^0-9]/g, '');
       const totalDays = parseInt(countText) || 0;
 
+      // 自社スタッフ（index < 5）の交通費自動入力ロジック
       if (index < 5) {
         const transportInput = transportRow?.querySelectorAll('input')[index];
         if (transportInput) {
@@ -833,17 +936,29 @@ document.addEventListener('DOMContentLoaded', function () {
       const stay = getVal(stayRow);
 
       let finalTotal = 0;
-      if (index < 5) {
-        finalTotal = unitPrice * totalDays;
+
+      // ★修正ポイント：人数（totalDays）が1人以上の時だけ計算を実行する
+      if (totalDays > 0) {
+        if (index < 5) {
+          // 自社：単価 × 人数
+          finalTotal = unitPrice * totalDays;
+        } else {
+          // 外注：(単価 × 人数) + 交通費 + 宿泊費
+          finalTotal = (unitPrice * totalDays) + transport + stay;
+        }
       } else {
-        finalTotal = (unitPrice * totalDays) + transport + stay;
+        // 人数が0人の時は、交通費などが入っていても合計は0にする
+        finalTotal = 0;
       }
 
       const totalInput = totalRow?.querySelectorAll('input')[index];
       if (totalInput) {
-        totalInput.value = finalTotal.toLocaleString();
+        // 合計を表示（0の場合は空文字にしたい場合はここを調整してください。今回は0を表示します）
+        totalInput.value = finalTotal > 0 ? finalTotal.toLocaleString() : "0";
       }
     });
+    // ★ここに追加：日数表の合計が変わったので単価セクションも更新する
+    updateUnitPriceSection();
   }
 
   // --- 1. スクロール同期 ---
@@ -1233,6 +1348,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (finalEstimatedPrice) {
       finalEstimatedPrice.value = `￥${finalSum.toLocaleString()}`;
     }
+    // ★ここに追加：全体金額が変わったので単価セクションも更新する
+    updateUnitPriceSection();
   }
 
 
@@ -1314,6 +1431,7 @@ document.addEventListener('DOMContentLoaded', function () {
   updateTotalQuantity();
   updateAllDisplays();
   syncHeaderCheckboxes();
+  updateUnitPriceSection();
 
 
 

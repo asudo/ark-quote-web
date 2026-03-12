@@ -110,6 +110,18 @@ input[type=number] {
     font-size: 14px;
 }
 
+/* 通常時はスクロールバーを予約（ガタつき防止） */
+html {
+    overflow-y: scroll;
+}
+
+/* モーダルが開いている時は、背後の html/body のスクロールバーを隠す */
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+    /* バーが消えた分のズレを防ぐ */
+}
+
 /* ==========================================================================
    3. テーブル関連のスタイル
    ========================================================================== */
@@ -220,7 +232,7 @@ input[type=number] {
 }
 
 /* ==========================================================================
-   工事日数表：最終レイアウト調整
+   工事日数表
    ========================================================================== */
 
 /* 1. テーブル全体の幅 (150px + 125px * 10 = 1400px) */
@@ -348,6 +360,59 @@ input[type=number] {
 /* 1列目のヘッダー部分の右側の線も細く統一 */
 #target-schedule-body th {
     border-right: 1px solid #dee2e6 !important;
+}
+
+/* ==========================================================================
+    分割入力用（Excel風仕切り）
+   ========================================================================== */
+
+/* 中のinput共通設定 */
+.split-input-left,
+.split-input-right {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    /* 親のグレー背景を透過 */
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0 8px !important;
+    /* padding: 4pxの代わり */
+    font-size: 14px;
+    height: 100%;
+    margin: 0;
+    color: #495057 !important;
+    /* 既存のreadonly色に合わせる */
+}
+
+/* 左側：金額（右寄せ） */
+.split-input-left {
+    text-align: right !important;
+}
+
+/* 右側：％（左寄せ） */
+.split-input-right {
+    text-align: left !important;
+}
+
+/* 真ん中の仕切り線（がっつり上下いっぱいに引く） */
+.split-border-line {
+    width: 1px;
+    height: 100%;
+    background-color: #ced4da;
+    /* 既存のborder色と統一 */
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+/* --- A材B材 --- */
+/* --- 自動生成行（B材の端数調整など）を水色にする --- */
+.initial-data-row {
+    background-color: #f0f7ff !important;
+}
+
+.initial-data-row td {
+    background-color: transparent !important;
+    /* 行の背景色を透過させて表示 */
 }
 
 /* ==========================================================================
