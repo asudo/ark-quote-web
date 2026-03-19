@@ -334,11 +334,14 @@
         <div class="container">
           <!-- 高所作業車 -->
           <div class="mb-3">
-            <div class="form-check mb-2">
+            <div class="form-check mb-2 d-flex align-items-center gap-3">
               <input class="form-check-input" type="checkbox" id="highWorkCar">
               <label class="form-check-label fw-bold" for="highWorkCar">
                 高所作業車
               </label>
+              <span id="highWorkCarWarning" class="text-danger fw-bold" style="display: none; font-size: 0.9rem;">
+                ※高車利用の際は、必ず見積を取ること。概算で出す時も見積依頼はすること
+              </span>
             </div>
             <!-- 天井高①・② 横並び -->
             <div id="highWorkSection" class="d-none">
@@ -493,10 +496,6 @@
         <fieldset class="mb-4">
           <div class="d-flex align-items-center gap-3 mb-3">
             <legend class="m-0" style="width: auto; border: none;">施工内容</legend>
-
-            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#constructionModal">
-              新規入力
-            </button>
           </div>
 
           <!-- 割増率入力テーブル -->
@@ -527,6 +526,13 @@
           </div>
 
           <!-- 施工内容新規入力 -->
+          <div class="text-end mb-3">
+            <button class="btn btn-warning fw-bold text-dark shadow-sm px-5" data-bs-toggle="modal"
+              data-bs-target="#constructionModal">
+              新規入力
+            </button>
+          </div>
+
           <div class="table-responsive construction-scroll">
             <table class="table table-bordered align-middle text-center">
               <thead class="table-secondary">
@@ -605,12 +611,15 @@
 
               <div class="col-6">
                 <label class="form-label fw-bold mb-1">
-                  合計・小計
+                  小計
                   <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
                     title="※小計の合計を表示します。"></i>
                   ：
                 </label>
                 <input type="text" id="laborSubtotal" class="form-control bg-light text-end" value="￥0" readonly>
+                <div class="text-end" style="font-size: 0.75rem; font-weight: bold; margin-top: 2px; color: #333;">
+                  ※最低金額は平日：<span style="color: #dc3545;">45,000円</span>
+                </div>
               </div>
 
             </div>
@@ -639,12 +648,18 @@
                 <label class="form-label">高所作業車等
                   <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
                     title="※高所作業車等÷提出見積金額を％で表示します。"></i>
+                  <span id="highWorkAlert"
+                    style="color: #dc3545; font-size: 0.75rem; font-weight: bold; margin-left: 5px; display: none;">
+                    ※実際の経費・見積入力。見積依頼はしたか？
+                  </span>
                 </label>
                 <div class="form-control d-flex align-items-center p-0 position-relative"
-                  style="background-color: #f1f3f5 !important; overflow: hidden; height: 31px;">
-                  <input type="text" id="highAltitudeVehicleCost" class="split-input-left" readonly value="¥0">
+                  style="overflow: hidden; height: 31px;">
+                  <input type="text" id="highAltitudeVehicleCost" class="split-input-left" placeholder="￥0"
+                    inputmode="numeric">
                   <div class="split-border-line"></div>
-                  <input type="text" id="highAltitudeVehiclePercentage" class="split-input-right" readonly value="0.0%">
+                  <input type="text" id="highAltitudeVehiclePercentage" class="split-input-right" readonly value="0.0%"
+                    style="background-color: #f1f3f5 !important;">
                 </div>
               </div>
 
@@ -681,12 +696,16 @@
                 </label>
                 <div class="form-control d-flex align-items-center p-0 position-relative"
                   style="background-color: #f1f3f5 !important; overflow: hidden; height: 31px;">
-                  <input type="text" id="overheadBMaterialCost" class="split-input-left" readonly value="¥0">
+
+                  <input type="text" id="overheadBMaterialCost" class="split-input-left" readonly value="¥0"
+                    style="background-color: #fff2cc !important; border-right: 1px solid #ced4da;">
+
                   <div class="split-border-line"></div>
-                  <input type="text" id="overheadBMaterialPercentage" class="split-input-right" readonly value="0.0%">
+
+                  <input type="text" id="overheadBMaterialPercentage" class="split-input-right" readonly value="0.0%"
+                    style="background-color: #f1f3f5 !important;">
                 </div>
               </div>
-
               <div class="col-md-4">
                 <label class="form-label">アーク利益
                   <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※提出見積金額-(人口・外注費+高所作業車等+商品・器具+産廃+諸経費+B材+)を表示する。
@@ -716,8 +735,8 @@
               <div class="col-md-4">
                 <label class="form-label">工事のみ
                   <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
-                    title="※見積webでA材・非常灯・照明器具にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)を表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。
-                    ※見積webでA材・非常灯・照明器具にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)÷(労務・諸経費+高所作業車等+値引き)を％で表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。"></i>
+                    title="※A材：商品等にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)を表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。
+                    ※A材：商品等にチェックが入っていた場合、(労務・諸経費+高所作業車等+値引き)-(人工・外注費+高所作業車等+産廃+諸経費+B材)÷(労務・諸経費+高所作業車等+値引き)を％で表示します。チェックが入っていないときは、ｱｰｸ利益を表示します。"></i>
                 </label>
                 <div class="form-control d-flex align-items-center p-0 position-relative"
                   style="background-color: #f1f3f5 !important; overflow: hidden; height: 31px;">
@@ -729,8 +748,8 @@
 
               <div class="col-md-4">
                 <label class="form-label">商品のみ
-                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※A材:照明器具・空調器具 商品等の入値合計の利益を表示します。
-                    ※A材・非常灯・照明器具にチェックが入って場合、A材:照明器具・空調器具 商品等の入値合計の利益÷金額の合計を％で表示します。空白の場合は空白のままにします。"></i>
+                  <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="※（人工・外注費＋高所作業所等＋商品・器具＋産廃）を表示します。
+                    ※A材：商品等にチェックが入っていた場合、A材：商品等の入値合計の利益÷金額の合計を％で表示します。A材：商品等にチェックがない場合と空白の場合は空白のままにします。"></i>
                 </label>
                 <div class="form-control d-flex align-items-center p-0 position-relative"
                   style="background-color: #f1f3f5 !important; overflow: hidden; height: 31px;">
@@ -793,7 +812,7 @@
               <div class="mb-1 d-block" style="height: 1.2rem;"></div>
 
               <div class="text-muted small" style="line-height: 1.6;">
-                ※合計・小計に応じて5,000円または10,000円を自動セットします。<br>
+                ※小計に応じて5,000円または10,000円を自動セットします。<br>
                 必要に応じて手動で書き換えることも可能です。
               </div>
             </div>
@@ -1062,69 +1081,56 @@
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label required">項目名</label>
-                          <select class="form-control" name="itemName" required>
-                            <option value="">選択してください</option>
-                            <option value="照明40W">照明40W</option>
-                            <option value="照明20W">照明20W</option>
-                            <option value="照明10W">照明10W</option>
-                            <option value="照明110W">照明110W</option>
-                            <option value="照明 水銀灯">照明 水銀灯</option>
-                            <option value="照明 投光器">照明 投光器</option>
-                            <option value="照明 ｺﾝﾊﾟｸﾄ">照明 ｺﾝﾊﾟｸﾄ</option>
-                            <option value="照明 ﾀﾞｳﾝﾗｲﾄ">照明 ﾀﾞｳﾝﾗｲﾄ</option>
-                            <option value="照明 ｽﾎﾟｯﾄﾗｲﾄ">照明 ｽﾎﾟｯﾄﾗｲﾄ</option>
-                            <option value="照明 ｼｰﾘﾝｸﾞ">照明 ｼｰﾘﾝｸﾞ</option>
-                            <option value="照明 ﾌﾞﾗｹｯﾄ">照明 ﾌﾞﾗｹｯﾄ</option>
-                            <option value="照明 その他">照明 その他</option>
-                            <option value="非常灯">非常灯</option>
-                            <option value="誘導灯">誘導灯</option>
-                            <option value="階段誘導灯">階段誘導灯</option>
-                            <option value="電球">電球</option>
-                            <option value="駐車場">駐車場</option>
-                          </select>
+                          <input type="text" class="form-control" name="itemName" id="itemNameInput"
+                            list="itemNameOptions" placeholder="選択または入力" required>
+                          <datalist id="itemNameOptions">
+                          </datalist>
                         </div>
 
                         <div class="col-md-6">
                           <label class="form-label">灯用</label>
-                          <input type="text" class="form-control" name="lightUse">
+                          <input type="text" class="form-control" name="lightUse" id="lightUseInput">
                         </div>
                       </div>
 
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label required">台数/本数</label>
-                          <input type="number" class="form-control" name="quantity" required>
+                          <input type="number" class="form-control" name="quantity" id="quantityInput" required>
                         </div>
+
                         <div class="col-md-6">
                           <label class="form-label required">単位</label>
-                          <select class="form-control" id="unitSelect" name="unit" required>
-                            <option value="">選択してください</option>
-                            <option value="台">台</option>
-                            <option value="式">式</option>
-                            <option value="ｾｯﾄ">ｾｯﾄ</option>
-                            <option value="個">個</option>
-                          </select>
+                          <input type="text" class="form-control" id="unitInput" name="unit" list="unitOptions"
+                            placeholder="選択または入力" required>
+                          <datalist id="unitOptions">
+                            <option value="台">
+                            <option value="式">
+                            <option value="ｾｯﾄ">
+                            <option value="個">
+                          </datalist>
                         </div>
                       </div>
 
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label required">内容</label>
-                          <select class="form-control" id="contentSelect" name="content" required>
-                            <option value="">選択してください</option>
-                            <option value="結線工事">結線工事</option>
-                            <option value="交換工事">交換工事</option>
-                            <option value="新規工事">新規工事</option>
-                            <option value="撤去工事">撤去工事</option>
-                            <option value="交換作業">交換作業</option>
-                            <option value="その他工事">その他工事</option>
-                          </select>
+                          <input type="text" class="form-control" id="contentInput" name="content" list="contentOptions"
+                            placeholder="選択または入力" required>
+                          <datalist id="contentOptions">
+                            <option value="結線工事">
+                            <option value="交換工事">
+                            <option value="新規工事">
+                            <option value="撤去工事">
+                            <option value="交換作業">
+                            <option value="その他工事">
+                          </datalist>
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">本数
                             <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
                               data-bs-placement="top"
-                              title="※見積webで工事種類が電気工事なら、灯用×台数/本数を表示し、空調工事と灯用が空白の場合は、空白を表示します。"></i>
+                              title="※見積webで工事種類が「電気工事」で「台数/本数」が0以外の時、灯用×台数/本数を計算します。0の時や「空調工事」の場合は空白を表示します。"></i>
                           </label>
                           <input type="number" class="form-control" name="count">
                         </div>
@@ -1135,7 +1141,7 @@
                           <label class="form-label">基本単価
                             <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
                               data-bs-placement="top"
-                              title="※項目が「照明 40W」または「照明 20W」の場合、内容に応じて金額(交換工事:3,500円/その他:1,500円)を自動入力します。 ※それ以外の項目は、E2が「空調工事」の場合のみ、データ元(M列:項目、N列:金額)から該当金額を取得。空調工事でない場合は0円を設定します。"></i>
+                              title="※照明(40W/20W)は内容に応じて（交換工事:3500円その他:1,500円）を自動入力。空調工事はマスタ単価を表示します。それ以外の項目やマスタ未設定時は空欄となりますので、直接入力してください。"></i>
                           </label>
                           <input type="text" class="form-control" name="basePrice">
                         </div>
@@ -1296,23 +1302,44 @@
             <div class="total-summary-box" id="a-totalSellRate">0%</div>
           </div>
           <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <label class="form-label mb-1">利益-入値合計</label>
+            <label class="form-label mb-1">利益</label>
             <div class="total-summary-box" id="a-totalProfit">¥0</div>
           </div>
           <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <label class="form-label mb-1">利益-入値率</label>
+            <label class="form-label mb-1">利益率</label>
             <div class="total-summary-box" id="a-totalProfitRate">0%</div>
           </div>
         </div>
 
         <hr class="section-divider">
 
-        <div class="text-end mb-3">
+        <div class="text-end mb-3 d-flex align-items-center justify-content-end gap-3">
+
+          <div class="d-flex align-items-center bg-white border rounded-pill px-3 py-1 shadow-sm"
+            style="font-size: 0.85rem; border-color: #dee2e6 !important;">
+            <span class="text-muted fw-bold me-2">
+              <i class="fas fa-magic text-primary me-1"></i>自動単価設定:
+            </span>
+            <div class="d-flex align-items-center">
+              <small class="text-secondary me-1">入値</small>
+              <i class="fas fa-times small text-muted mx-1"></i>
+              <input type="number" class="form-control form-control-sm border-0 border-bottom p-0 text-center fw-bold"
+                id="a-sell-coefficient" value="1.3" step="0.1" min="1.0"
+                style="width: 40px; background: transparent; color: #0d6efd; box-shadow: none; border-bottom: 2px solid #0d6efd !important; border-radius: 0;">
+              <span class="fw-bold text-primary ms-1">倍</span>
+              <i class="fas fa-long-arrow-alt-right text-muted mx-2"></i>
+              <span id="coeff-description" class="badge rounded-pill bg-light text-dark border fw-normal">
+                100円単位切り上げ
+              </span>
+            </div>
+          </div>
+
           <button class="btn btn-warning fw-bold text-dark shadow-sm px-5" data-bs-toggle="modal"
             data-bs-target="#a-inputModal">
             新規入力
           </button>
         </div>
+
 
         <div class="table-responsive mb-4">
           <table class="table table-bordered table-sm text-nowrap">
@@ -1381,12 +1408,25 @@
                     </select>
                   </div>
                   <div class="col-md-3">
-                    <label class="form-label">
+                    <label class="form-label required" for="a-modal-unitPrice">
                       単価
-                      <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
-                        title="入値×1.3倍（100円単位切り上げ）で表示されます。必要に応じて手動で書き換え可能です。"></i>
+                      <i id="a-unit-tooltip-icon" class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
+                        title="下のスイッチがONなら「入値 × 1.3」で自動算出されます。OFFにすると好きな金額を入力・固定できます。"></i>
                     </label>
-                    <input type="number" class="form-control" id="a-modal-unitPrice">
+                    <input type="number" class="form-control" id="a-modal-unitPrice" required>
+                    <div class="d-flex justify-content-end align-items-center mt-1 flex-wrap gap-2">
+                      <span class="text-dark" style="font-size: 0.85rem; white-space: nowrap;">自動計算</span>
+                      <div class="d-flex align-items-center flex-nowrap">
+                        <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                          <input class="form-check-input ms-0 me-2" type="checkbox" id="a-auto-unit-check" checked
+                            style="cursor: pointer; width: 2.1rem; height: 1.05rem; margin-top: 0;">
+                        </div>
+                        <label class="form-check-label" for="a-auto-unit-check" style="cursor: pointer;">
+                          <span id="a-unit-badge" class="badge rounded-pill badge-outline-blue"
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem; white-space: nowrap;">入値×1.3</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">
@@ -1419,11 +1459,25 @@
                     <input type="number" class="form-control" id="a-modal-listTotal" readonly>
                   </div>
                   <div class="col-md-3">
-                    <label class="form-label required">入値
+                    <label class="form-label required">
+                      入値
                       <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip"
-                        title="定価入力時にその20%が自動算出されます。必要に応じて手動で書き換え可能です。"></i>
+                        title="下のスイッチがONなら「定価 × 0.2」で自動算出されます。個別に交渉した価格を打つ場合はOFFにしてください。"></i>
                     </label>
                     <input type="number" class="form-control" id="a-modal-costPrice" required>
+                    <div class="d-flex justify-content-end align-items-center mt-1 flex-wrap gap-2">
+                      <span class="text-dark" style="font-size: 0.85rem; white-space: nowrap;">自動計算</span>
+                      <div class="d-flex align-items-center flex-nowrap">
+                        <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
+                          <input class="form-check-input ms-0 me-2" type="checkbox" id="a-auto-cost-check" checked
+                            style="cursor: pointer; width: 2.1rem; height: 1.05rem; margin-top: 0;">
+                        </div>
+                        <label class="form-check-label" for="a-auto-cost-check" style="cursor: pointer;">
+                          <span id="a-cost-badge" class="badge rounded-pill badge-outline-blue"
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem; white-space: nowrap;">定価×0.2</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">
@@ -1530,11 +1584,11 @@
             <div class="total-summary-box" id="b-totalSellRate">0%</div>
           </div>
           <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <label class="form-label mb-1">利益-入値合計</label>
+            <label class="form-label mb-1">利益</label>
             <div class="total-summary-box" id="b-totalProfit">¥0</div>
           </div>
           <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-            <label class="form-label mb-1">利益-入値率</label>
+            <label class="form-label mb-1">利益率</label>
             <div class="total-summary-box" id="b-totalProfitRate">0%</div>
           </div>
         </div>

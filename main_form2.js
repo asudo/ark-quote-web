@@ -1,96 +1,135 @@
 document.addEventListener('DOMContentLoaded', function () {
 
   // ==========================================================================
-  // 1. 各項目の要素定義
+  // 1. 定数・変数定義
   // ==========================================================================
+  let masterData = [];             // Supabaseから取得したマスタ
+  let editingRow = null;           // 編集中の行
+  let isSurveyFeeManual = false;   // 現調費の手動修正フラグ
+  let lastProfitSettings = {       // 割増設定の引き継ぎ用
+    check_day: false, check_night: false, check_high: false,
+    check_special: false, check_waste: false, check_adjust: false
+  };
 
-  // --- 提出見積金額（最終合計） ---
-  const finalEstimatedPrice = document.getElementById('finalEstimatedPrice');
+  // --- テーブル列番号定義 (1開始) ---
+  const COL = {
+    QTY: 4,               // 台数/本数　
+    BASE_PRICE: 8,        // 基本単価
+    PROFIT_DAY: 9,        // 昼間割増
+    PROFIT_NIGHT: 10,     // 夜間割増
+    PROFIT_HIGH: 11,      // 高所割増
+    PROFIT_SPECIAL: 12,   // 特殊割増
+    PROFIT_WASTE: 13,     // 産廃割増
+    PROFIT_ADJUST: 14,    // 微調整
+    FINAL_UNIT_PRICE: 15, // 確定単価
+    SUBTOTAL: 16          // 小計
+  };
 
-  // --- 高所作業車セクション ---
+  // --- メイン表示・合計関連 ---
+  const finalEstimatedPrice = document.getElementById('finalEstimatedPrice'); // 提出見積金額
+  const budgetDiscount = document.getElementById('budgetDiscount');           // 値引き
+  const laborSubtotal = document.getElementById('laborSubtotal');             // 小計
+  const displayLaborTotal = document.getElementById('displayLaborTotal');     // 労務・諸経費
+  const displayHighWorkTotal = document.getElementById('displayHighWorkTotal'); // 高所作業車等
+  const displayMaterialA = document.getElementById('displayMaterialA');       // 商品・器具(A材)
+  const displayMaterialB = document.getElementById('displayMaterialB');       // 消耗雑材(B材)
+  const totalQuantityDisplay = document.getElementById('totalQuantityDisplay'); // 総数
+
+  // --- セクション制御 (高所車・A材B材・駐車場) ---
   const highWorkCarCheck = document.getElementById('highWorkCar');
   const highWorkSection = document.getElementById('highWorkSection');
   const highWorkTable = document.querySelector('#highWorkSection table');
-  const displayHighWorkTotal = document.getElementById('displayHighWorkTotal');
-
-  // --- 値引き設定 ---
-  const budgetDiscount = document.getElementById('budgetDiscount');
-
-  // --- 労務費関連 ---
-  const laborSubtotal = document.getElementById('laborSubtotal');
-  const displayLaborTotal = document.getElementById('displayLaborTotal');
-
-  // --- A材・B材チェック ---
   const aMaterialCheck = document.getElementById('aMaterialCheck');
   const aTotalAmountDiv = document.getElementById('a-totalAmount');
-  const displayMaterialA = document.getElementById('displayMaterialA');
   const bMaterialCheck = document.getElementById('bMaterialCheck');
   const bTotalAmountDiv = document.getElementById('b-totalAmount');
-  const displayMaterialB = document.getElementById('displayMaterialB');
+  const parkingCheck = document.getElementById('parkingCheck');
 
-  // --- モーダル内の入力要素 ---
-  const itemNameSelect = document.querySelector('[name="itemName"]');
-  const contentSelect = document.getElementById('contentSelect') || document.querySelector('[name="content"]');
-  const basePriceInput = document.querySelector('input[name="basePrice"]');
+  // --- モーダル内 入力要素 ---
+  const modalElement = document.getElementById('constructionModal');
+  const modalTitle = document.querySelector('#constructionModal .modal-title');
+  const constructionForm = document.getElementById('constructionForm');
+  const itemNameInput = document.getElementById('itemNameInput');
+  const itemNameSelect = itemNameInput; 
+  const itemNameOptions = document.getElementById('itemNameOptions'); 
+  const contentInput = document.getElementById('contentInput') || document.querySelector('[name="content"]');
+  const basePriceInput = document.getElementById('basePrice') || document.querySelector('input[name="basePrice"]');
   const finalUnitPriceInput = document.querySelector('.totalConfirmedPrice') || document.getElementById('finalUnitPrice');
   const subtotalInput = document.getElementById('subtotalDisplay');
+  const unitInput = document.getElementById('unitInput');
+  const unitSelect = document.getElementById('unitSelect') || document.querySelector('[name="unit"]');
 
   // --- 数量・本数関連 ---
   const lightUseInput = document.querySelector('input[name="lightUse"]');
   const quantityInput = document.querySelector('input[name="quantity"]');
   const countInput = document.getElementById('count') || document.querySelector('input[name="count"]');
 
-  // --- 施工内容の統計 ---
-  const totalQuantityDisplay = document.getElementById('totalQuantityDisplay');
-
-  // --- 割増設定の各チェックボックス ---
+  // --- 割増・係数設定 ---
   const profitCheckIds = ['check_day', 'check_night', 'check_high', 'check_special', 'check_waste', 'check_adjust'];
-
-  // 係数チェックボックス
   const keisuCheck = document.getElementById('coefficientCheck');
+  const adjustCheck = document.getElementById('check_adjust');
+  const adjustInput = document.querySelector('input[name="profit_adjust"]');
+  const headerChecks = document.querySelectorAll('thead .coeffCheck');
 
-  // --- 工事種類 ---
+  // 割増入力欄をまとめて保持
+  const profitInputs = {};
+  profitCheckIds.forEach(id => {
+    profitInputs[id] = document.querySelector(`.modal-body input[name="${id.replace('check_', 'profit_')}"]`);
+  });
+
+  // --- 利益率・報酬表示 ---
+  const arcProfitPercentage = document.getElementById('arcProfitPercentage');
+  const constructionOnlyPercentage = document.getElementById('constructionOnlyPercentage');
+  const rewardAmount = document.getElementById('rewardAmount');
+  const rewardPercentage = document.getElementById('rewardPercentage');
+
+  // --- 工事種別・操作ボタン・テーブル ---
   const koujiType1 = document.getElementById('koujiType1');
   const koujiType2 = document.getElementById('koujiType2');
+  const openModalBtn = document.querySelector('[data-bs-target="#constructionModal"]:not(.editBtn)');
+  const registerBtn = document.getElementById('registerBtn');
+  const constructionTableBody = document.querySelector('.construction-scroll tbody');
+  const btnToForm2 = document.getElementById('btnToForm2');
+  const form2TabEl = document.getElementById('form2-tab');
 
-  // --- 駐車場代復活ボタン ---
-  const parkingCheck = document.getElementById('parkingCheck');
+  // ==========================================================================
+  // ★ マスターデータ
+  // ==========================================================================
+  // Supabaseからマスタデータを取得する
+  async function fetchMasterData() {
+    try {
+      const { data, error } = await supabaseClient.from('m_construction_items').select('*');
 
-  // 編集中の行を保持するための変数
-  let editingRow = null;
+      if (error) throw error;
 
-  // 割増設定を引き継ぐための保存用オブジェクト
-  let lastProfitSettings = {
-    check_day: false,
-    check_night: false,
-    check_high: false,
-    check_special: false,
-    check_waste: false,
-    check_adjust: false
-  };
-
-  // --- 割増率のマスター定義 ---
-  function getCurrentRates() {
-    return {
-      'day': parseFloat(document.getElementById('rate_day')?.value) || 0,
-      'night': parseFloat(document.getElementById('rate_night')?.value) || 0,
-      'high': parseFloat(document.getElementById('rate_high')?.value) || 0,
-      'special': parseFloat(document.getElementById('rate_special')?.value) || 0,
-      'waste': parseFloat(document.getElementById('rate_waste')?.value) || 0
-    };
+      masterData = data;
+      console.log("マスタデータを取得しました:", masterData);
+      updateItemNameOptions();
+    } catch (err) {
+      console.error('マスタデータの取得に失敗しました:', err);
+    }
   }
 
-  // --- メインテーブルと登録ボタン ---
-  const constructionTableBody = document.querySelector('.construction-scroll tbody');
-  const modalElement = document.getElementById('constructionModal');
-  const registerBtn = document.getElementById('registerBtn');
+  fetchMasterData();
 
-  // 「施工内容の入力へ進む」ボタンをクリックした時の処理
-  const btnToForm2 = document.getElementById('btnToForm2');
-  const form2TabEl = document.getElementById('form2-tab'); // タブのボタン側のID
+  function updateItemNameOptions() {
+    if (!itemNameOptions) return;
+    itemNameOptions.innerHTML = ''; // クリア
 
-  // 現調費を手動で修正したかを記録する変数
-  let isSurveyFeeManual = false;
+    const selectedKoujiType = document.querySelector('input[name="koujiType"]:checked')?.value;
+
+    if (Array.isArray(masterData)) {
+      masterData.forEach(item => {
+        if (item.category_type === selectedKoujiType) {
+          const opt = document.createElement('option');
+          opt.value = item.item_name;
+          opt.dataset.price = item.default_price;
+          opt.dataset.unit = item.unit;
+          itemNameOptions.appendChild(opt);
+        }
+      });
+    }
+  }
 
   // ==========================================================================
   // ★ 「施工内容の入力へ進む」ボタンをクリックした時の処理
@@ -104,33 +143,13 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ==========================================================================
-  // ★ モーダルが閉じられた時のリセット処理
-  // ==========================================================================
-  modalElement?.addEventListener('hidden.bs.modal', function () {
-    // モーダルが閉じられたら、編集モードを解除し入力をクリアする
-    editingRow = null;
-    clearModalInputsExceptProfits();
-
-    // 割増チェックを「前回の保存状態」に差し戻す
-    profitCheckIds.forEach(id => {
-      const cb = document.getElementById(id);
-      if (cb) cb.checked = lastProfitSettings[id];
-    });
-
-    // 係数スイッチの同期
-    if (keisuCheck) {
-      const hasOtherProfits = ['check_day', 'check_night', 'check_high', 'check_special', 'check_waste']
-        .some(id => lastProfitSettings[id] === true);
-      keisuCheck.checked = hasOtherProfits;
-    }
-
-    calculateModalProfits();
-  });
-
-  // ==========================================================================
-  // 2. 高所作業車：計算・イベントロジック
+  // 3. 高所作業車：計算・イベントロジック
   // ==========================================================================
   highWorkCarCheck?.addEventListener('change', function () {
+    const warningText = document.getElementById('highWorkCarWarning');
+    if (warningText) {
+      warningText.style.display = this.checked ? 'inline' : 'none';
+    }
     highWorkSection?.classList.toggle('d-none', !this.checked);
     updateAllDisplays();
   });
@@ -157,43 +176,45 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ==========================================================================
-  // 3. 値引き・A材・B材：イベントロジック
+  // 4. 値引き・A材・B材：イベントロジック
   // ==========================================================================
   aMaterialCheck?.addEventListener('change', updateAllDisplays);
   bMaterialCheck?.addEventListener('change', updateAllDisplays);
   laborSubtotal?.addEventListener('input', updateAllDisplays);
 
-  // ==========================================================================
-  // 4. 施工内容：自動計算ロジック
-  // ==========================================================================
-  // --- 項目名・内容から基本単価を自動セット ---
-  function updateBasePrice() {
-    if (!itemNameSelect || !contentSelect || !basePriceInput) return;
-    const selectedItem = itemNameSelect.value;
-    const selectedContent = contentSelect.value;
-    let calculatedPrice = 0;
-    if (selectedItem.includes("照明")) {
-      calculatedPrice = (selectedContent === "交換工事") ? 3500 : 1500;
-    }
-    basePriceInput.value = calculatedPrice;
-    calculateModalProfits();
-  }
-
-  // --- 電気工事の場合の本数（count）自動計算 ---
-  function updateCount() {
-    if (!countInput) return;
-    const isElec = (koujiType1?.value === "電気工事" || koujiType2?.value === "電気工事");
-    if (isElec) {
-      const lightUse = parseFloat(lightUseInput?.value) || 0;
-      const quantity = parseFloat(quantityInput?.value) || 0;
-      countInput.value = (lightUse * quantity) || "";
-    }
-    updateModalSubtotal();
-  }
+  const budgetDiscountInput = document.getElementById('budgetDiscount');
 
   // ==========================================================================
-  // ★ 割増率をリアルタイムに取得するヘルパー
+  // 5. 施工内容
   // ==========================================================================
+
+  // -- イベントリスナーの登録 -- //
+
+  // 1. 本数・小計の連動
+  lightUseInput?.addEventListener('input', () => {
+    if (typeof updateCount === "function") updateCount();
+  });
+
+  // 2. 基本単価の判定（照明判定ロジック含む）
+  itemNameInput?.addEventListener('input', () => {
+    if (typeof updateBasePrice === "function") updateBasePrice();
+  });
+  contentInput?.addEventListener('input', () => {
+    if (typeof updateBasePrice === "function") updateBasePrice();
+  });
+
+  // 3. 工事種別ラジオボタンが切り替わったらプルダウンと計算をリセット
+  document.querySelectorAll('input[name="koujiType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (typeof updateItemNameOptions === "function") updateItemNameOptions();
+      if (typeof updateCount === "function") updateCount();
+      if (typeof updateBasePrice === "function") updateBasePrice();
+    });
+  });
+
+  /**
+   * ★ 割増率リアルタイム連動
+   */
   function getCurrentRates() {
     return {
       'day': parseFloat(document.getElementById('rate_day')?.value) || 0,
@@ -207,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- モーダル内の割増・最終単価計算 ---
   function calculateModalProfits() {
     const base = parseFloat(basePriceInput?.value) || 0;
-    const currentRates = getCurrentRates(); // ★最新の割増率を取得
+    const currentRates = getCurrentRates();
     let total = base;
 
     let hasAnyCheckedProfit = false;
@@ -223,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
           // --- 通常の割増項目（昼間・夜間など）の計算 ---
           const type = id.replace('check_', '');
-          const rateVal = currentRates[type] || 0; // ★最新の率を使って金額を算出
+          const rateVal = currentRates[type] || 0;
           modalInput.value = Math.round(base * rateVal);
         }
 
@@ -248,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
       keisuCheck.checked = hasAnyCheckedProfit;
     }
 
-    // 確定単価（合計）の更新（ここには微調整は含まれません）
+    // 確定単価（合計）の更新
     if (finalUnitPriceInput) {
       const resultTotal = Math.round(total);
       if (finalUnitPriceInput.tagName === 'INPUT') finalUnitPriceInput.value = resultTotal;
@@ -267,8 +288,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const quantity = parseFloat(quantityInput?.value) || 0;
 
     // 微調整の値を取得（チェックが入っている時のみ）
-    const adjustCheck = document.getElementById('check_adjust');
-    const adjustInput = document.querySelector('input[name="profit_adjust"]');
     const adjustVal = (adjustCheck && adjustCheck.checked) ? (parseFloat(adjustInput?.value) || 0) : 0;
 
     if (subtotalInput) {
@@ -282,14 +301,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // --- モーダル内の入力リセット ---
   function clearModalInputsExceptProfits() {
-    if (itemNameSelect) itemNameSelect.value = "";
-    if (contentSelect) contentSelect.value = "";
+    if (itemNameInput) itemNameInput.value = "";
+    if (contentInput) contentInput.value = "";
     if (quantityInput) quantityInput.value = "";
     if (countInput) countInput.value = "";
     if (lightUseInput) lightUseInput.value = "";
-    if (basePriceInput) basePriceInput.value = "0";
-    const unitSelect = document.getElementById('unitSelect') || document.querySelector('[name="unit"]');
-    if (unitSelect) unitSelect.value = "";
+    if (basePriceInput) basePriceInput.value = "";
+    if (unitInput) unitInput.value = "";
 
     // 微調整のリセットを追加
     const adjustCheck = document.getElementById('check_adjust');
@@ -301,10 +319,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (finalUnitPriceInput) {
-      finalUnitPriceInput.tagName === 'INPUT' ? (finalUnitPriceInput.value = "0") : (finalUnitPriceInput.textContent = "0");
+      finalUnitPriceInput.tagName === 'INPUT' ? (finalUnitPriceInput.value = "") : (finalUnitPriceInput.textContent = "");
     }
     if (subtotalInput) {
-      subtotalInput.tagName === 'INPUT' ? (subtotalInput.value = "0") : (subtotalInput.textContent = "0");
+      subtotalInput.tagName === 'INPUT' ? (subtotalInput.value = "") : (subtotalInput.textContent = "");
     }
   }
 
@@ -330,62 +348,164 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ==========================================================================
-  // ★ 新規登録ボタン（モーダルを開くボタン）クリック時
-  // ==========================================================================
-  const openModalBtn = document.querySelector('[data-bs-target="#constructionModal"]:not(.editBtn)');
+  /**
+  * ★ 本数・数量の計算
+  */
+  function updateCount() {
+    if (!countInput) return;
 
-  openModalBtn?.addEventListener('click', function () {
+    const koujiType = document.querySelector('input[name="koujiType"]:checked')?.value?.trim();
+
+    // 1. 空調工事の場合は本数を空にする
+    if (koujiType === "空調工事") {
+      countInput.value = "";
+    } else {
+      // 2. 数値の取得（電気工事等の場合）
+      const lightUse = parseFloat(lightUseInput?.value) || 0;
+      const quantity = parseFloat(quantityInput?.value) || 0;
+
+      // 3. 計算実行
+      countInput.value = (quantity !== 0) ? (lightUse * quantity) : "";
+    }
+
+    // 【重要】数量が変わったので、小計(subtotal)を再計算させる
+    updateModalSubtotal();
+  }
+
+  /**
+   * ★ 基本単価の自動判定（照明判定ロジック復活版）
+   */
+  function updateBasePrice() {
+    if (!itemNameInput || !basePriceInput) return;
+
+    const selectedItem = itemNameInput.value.trim();
+    const selectedContent = contentInput?.value?.trim();
+
+    if (selectedItem === "") {
+      basePriceInput.value = "";
+      if (unitInput) unitInput.value = "";
+      calculateModalProfits();
+      return;
+    }
+
+    let calculatedPrice = 0;
+
+    // --- 照明40W/20W の判定（文字列で直接比較） ---
+    if (selectedItem === "照明 40W" || selectedItem === "照明 20W") {
+      if (selectedContent === "交換工事") {
+        calculatedPrice = 3500;
+      } else {
+        calculatedPrice = 1500;
+      }
+    }
+    // --- それ以外は datalist からマスタ単価を探す ---
+    else {
+      const options = itemNameOptions?.querySelectorAll('option');
+      options?.forEach(opt => {
+        if (opt.value === selectedItem) {
+          calculatedPrice = parseFloat(opt.dataset.price) || 0;
+          if (unitInput && opt.dataset.unit) {
+            unitInput.value = opt.dataset.unit;
+          }
+        }
+      });
+    }
+
+    basePriceInput.value = calculatedPrice || "";
+    calculateModalProfits();
+  }
+
+  /**
+    * ★ モーダルが閉じられた時のリセット処理
+    */
+  modalElement?.addEventListener('hidden.bs.modal', function () {
+    // モーダルが閉じられたら、編集モードを解除し入力をクリアする
     editingRow = null;
-    const modalTitle = document.querySelector('#constructionModal .modal-title');
-    if (modalTitle) modalTitle.textContent = "新規入力：施工内容";
-    if (registerBtn) registerBtn.textContent = "登録完了";
-
     clearModalInputsExceptProfits();
 
-    // --- ヘッダーの状態をモーダルにコピー ---
-    const headerChecks = document.querySelectorAll('thead .coeffCheck');
-    let hasAnyHeaderChecked = false;
-
-    headerChecks.forEach(headerCb => {
-      const type = headerCb.getAttribute('data-type');
-      const modalCbId = `check_${type}`;
-      const modalCb = document.getElementById(modalCbId);
-
-      if (modalCb) {
-        modalCb.checked = headerCb.checked;
-        lastProfitSettings[modalCbId] = headerCb.checked;
-        if (headerCb.checked && type !== 'adjust') {
-          hasAnyHeaderChecked = true;
-        }
-      }
+    // 割増チェックを「前回の保存状態」に差し戻す
+    profitCheckIds.forEach(id => {
+      const cb = document.getElementById(id);
+      if (cb) cb.checked = lastProfitSettings[id];
     });
 
+    // 係数スイッチの同期
     if (keisuCheck) {
-      keisuCheck.checked = hasAnyHeaderChecked;
+      const hasOtherProfits = ['check_day', 'check_night', 'check_high', 'check_special', 'check_waste']
+        .some(id => lastProfitSettings[id] === true);
+      keisuCheck.checked = hasOtherProfits;
     }
 
     calculateModalProfits();
   });
 
-  // --- 各入力要素のリアルタイム連動イベント設定 ---
-  basePriceInput?.addEventListener('input', calculateModalProfits);
-  quantityInput?.addEventListener('input', () => { updateCount(); updateModalSubtotal(); });
-  document.querySelectorAll('[id^="rate_"]').forEach(el => el.addEventListener('input', calculateModalProfits));
-  itemNameSelect?.addEventListener('change', updateBasePrice);
-  contentSelect?.addEventListener('change', updateBasePrice);
+  /**
+    * ★ 各入力要素のリアルタイム連動イベント設定
+    */
+  // 汎用的な変換・再計算関数
+  function handleNumericInput(el, callback) {
+    let isComposing = false;
 
-  // ==========================================================================
-  // ★ 登録・編集完了ボタンの処理
-  // ==========================================================================
+    el.addEventListener('compositionstart', () => isComposing = true);
+    el.addEventListener('compositionend', function () {
+      isComposing = false;
+      // 変換確定後に一拍置いてから処理
+      setTimeout(() => {
+        // 1. 全角を半角に
+        let val = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+        // 2. 数字とドット以外を削除（これで変な文字混入を防ぐ）
+        this.value = val.replace(/[^0-9.]/g, '');
+        if (callback) callback();
+      }, 10);
+    });
+
+    el.addEventListener('input', function () {
+      if (isComposing) return;
+      // 半角入力時も、数字以外が混じったら掃除する
+      if (/[^0-9.]/.test(this.value)) {
+        this.value = this.value.replace(/[^0-9.]/g, '');
+      }
+      if (callback) callback();
+    });
+
+    el.addEventListener('blur', function () {
+      let val = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+      this.value = val.replace(/[^0-9.]/g, '');
+      if (callback) callback();
+    });
+  }
+
+  // --- 基本単価への適用 ---
+  if (basePriceInput) {
+    handleNumericInput(basePriceInput, () => {
+      calculateModalProfits();
+    });
+  }
+
+  // --- 台数/数量への適用 ---
+  if (quantityInput) {
+    handleNumericInput(quantityInput, () => {
+      updateCount();
+      updateModalSubtotal();
+    });
+  }
+
+  // その他の既存処理（変更なし）
+  document.querySelectorAll('[id^="rate_"]').forEach(el => el.addEventListener('input', calculateModalProfits));
+  itemNameSelect?.addEventListener('input', updateBasePrice);
+  contentInput?.addEventListener('input', updateBasePrice);
+
+  /**
+  * ★ 登録・編集完了ボタンの処理
+  */
   registerBtn?.addEventListener('click', function (e) {
     e.preventDefault();
 
-    const item = itemNameSelect?.value || '';
+    const item = itemNameInput?.value || '';
     const qty = quantityInput?.value || '';
     const unitSelect = document.getElementById('unitSelect') || document.querySelector('[name="unit"]');
-    const unit = unitSelect?.value || '';
-    const content = contentSelect?.value || '';
+    const unit = unitInput?.value || '';
+    const content = contentInput?.value || '';
     const count = countInput ? countInput.value : '';
     const basePrice = basePriceInput?.value || '0';
     const finalPrice = finalUnitPriceInput?.value || finalUnitPriceInput?.textContent || '0';
@@ -411,35 +531,35 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const rowHtml = `
-   <td>
-    <div class="d-flex justify-content-center gap-1">
-     <button type="button" class="editBtn">編集</button>
-     <button type="button" class="deleteBtn">削除</button>
-    </div>
-   </td>
-   <td></td>
-   <td>${item}</td>
-   <td>${lightUse}</td>
-   <td class="text-end">${qty}</td>
-   <td>${unit}</td>
-   <td>${content}</td>
-   <td class="text-end">${count}</td>
-   <td class="text-end base-price-cell">${basePrice}</td>
-   <td class="text-end profit-cell">${getProfitVal('day')}</td>
-   <td class="text-end profit-cell">${getProfitVal('night')}</td>
-   <td class="text-end profit-cell">${getProfitVal('high')}</td>
-   <td class="text-end profit-cell">${getProfitVal('special')}</td>
-   <td class="text-end profit-cell">${getProfitVal('waste')}</td>
-   <td class="text-end profit-cell">${getProfitVal('adjust')}</td>
-   <td class="text-end fw-bold final-unit-price-cell">${finalPrice}</td>
-   <td class="text-end fw-bold subtotal-cell">${subtotal}</td>
-   <td class="text-center">
-    <select class="form-select form-select-sm keisu-dropdown">
-     <option value="on" ${isKeisuChecked ? 'selected' : ''}>〇</option>
-     <option value="off" ${!isKeisuChecked ? 'selected' : ''}>✕</option>
-    </select>
-   </td>
-  `;
+      <td>
+        <div class="d-flex justify-content-center gap-1">
+        <button type="button" class="editBtn">編集</button>
+        <button type="button" class="deleteBtn">削除</button>
+        </div>
+      </td>
+      <td></td>
+      <td>${item}</td>
+      <td>${lightUse}</td>
+      <td class="text-end">${qty}</td>
+      <td>${unit}</td>
+      <td>${content}</td>
+      <td class="text-end">${count}</td>
+      <td class="text-end base-price-cell">${basePrice}</td>
+      <td class="text-end profit-cell">${getProfitVal('day')}</td>
+      <td class="text-end profit-cell">${getProfitVal('night')}</td>
+      <td class="text-end profit-cell">${getProfitVal('high')}</td>
+      <td class="text-end profit-cell">${getProfitVal('special')}</td>
+      <td class="text-end profit-cell">${getProfitVal('waste')}</td>
+      <td class="text-end profit-cell">${getProfitVal('adjust')}</td>
+      <td class="text-end fw-bold final-unit-price-cell">${finalPrice}</td>
+      <td class="text-end fw-bold subtotal-cell">${subtotal}</td>
+      <td class="text-center">
+        <select class="form-select form-select-sm keisu-dropdown">
+        <option value="on" ${isKeisuChecked ? 'selected' : ''}>〇</option>
+        <option value="off" ${!isKeisuChecked ? 'selected' : ''}>✕</option>
+        </select>
+      </td>
+      `;
 
     if (editingRow) {
       editingRow.innerHTML = rowHtml;
@@ -469,13 +589,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
     modalInstance.hide();
 
-    // 割増率テーブルの変更を監視し、表全体を即座に再計算する
     document.querySelectorAll('[id^="rate_"]').forEach(rateInput => {
       rateInput.addEventListener('input', function () {
         const currentRates = getCurrentRates();
-        const headerChecks = {};
+        const currentHeaderChecks = {};
         document.querySelectorAll('thead .coeffCheck').forEach(cb => {
-          headerChecks[cb.getAttribute('data-type')] = cb.checked;
+          currentHeaderChecks[cb.getAttribute('data-type')] = cb.checked;
         });
 
         Array.from(constructionTableBody.rows).forEach(row => {
@@ -486,15 +605,13 @@ document.addEventListener('DOMContentLoaded', function () {
           const adjust = parseFloat(row.cells[14].textContent) || 0;
           const keisuSelect = row.querySelector('.keisu-dropdown');
 
-          // 1. 各列の金額を新しい率で更新
           const colMap = { 'day': 9, 'night': 10, 'high': 11, 'special': 12, 'waste': 13 };
           Object.keys(colMap).forEach(type => {
-            if (headerChecks[type]) {
+            if (currentHeaderChecks[type]) {
               row.cells[colMap[type]].textContent = Math.round(basePrice * currentRates[type]);
             }
           });
 
-          // 2. 行の確定単価と小計を更新
           if (keisuSelect?.value === 'on') {
             let totalUnitPrice = basePrice;
             for (let i = 9; i <= 13; i++) {
@@ -509,18 +626,17 @@ document.addEventListener('DOMContentLoaded', function () {
         updateLaborSubtotal();
       });
     });
-
   });
 
-  // ==========================================================================
-  // ★ 操作（編集・削除）および表の係数（〇✕）連動
-  // ==========================================================================
+  /**
+    * ★ 操作（編集・削除）および表の係数（〇✕）連動
+    */
   function assignRowEvents(row) {
     if (!row) return;
 
     // --- 1. 削除ボタン：挙動の安定化 ---
     row.querySelector('.deleteBtn')?.addEventListener('click', function (e) {
-      e.stopPropagation(); // 重複動作を防止
+      e.stopPropagation();
       if (window.confirm('この施工内容を削除してもよろしいですか？')) {
         row.remove();
         updateTableNumbers();
@@ -533,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- 2. 編集ボタン：表からデータを取得してモーダルにセットする ---
     row.querySelector('.editBtn')?.addEventListener('click', function (e) {
       e.stopPropagation();
-      editingRow = row; // 編集対象の行を保持
+      editingRow = row;
 
       // モーダルのタイトルとボタン名を変更
       const modalTitle = document.querySelector('#constructionModal .modal-title');
@@ -541,15 +657,15 @@ document.addEventListener('DOMContentLoaded', function () {
       if (registerBtn) registerBtn.textContent = "更新完了";
 
       // --- 表のセルから入力欄へ値をコピー ---
-      if (itemNameSelect) itemNameSelect.value = row.cells[2].textContent;   // 項目名
-      if (lightUseInput) lightUseInput.value = row.cells[3].textContent;     // 灯用
-      if (quantityInput) quantityInput.value = row.cells[4].textContent;     // 台数/本数
+      if (itemNameInput) itemNameInput.value = row.cells[2].textContent;   // 項目名
+      if (lightUseInput) lightUseInput.value = row.cells[3].textContent;    // 灯用
+      if (quantityInput) quantityInput.value = row.cells[4].textContent;    // 台数/本数
 
       const unitSelect = document.getElementById('unitSelect') || document.querySelector('[name="unit"]');
-      if (unitSelect) unitSelect.value = row.cells[5].textContent;           // 単位
+      if (unitInput) unitInput.value = row.cells[5].textContent;       // 単位
 
-      if (contentSelect) contentSelect.value = row.cells[6].textContent;     // 内容
-      if (countInput) countInput.value = row.cells[7].textContent;           // 本数
+      if (contentInput) contentInput.value = row.cells[6].textContent;    // 内容
+      if (countInput) countInput.value = row.cells[7].textContent;       // 本数
       if (basePriceInput) basePriceInput.value = row.cells[8].textContent;   // 基本単価
 
       // --- 割増列（9〜14列）の状態を復元 ---
@@ -618,46 +734,117 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ==========================================================================
-  // ★ 駐車場代ロジック等
-  // ==========================================================================
+  /**
+    * ★ ヘッダーのチェックボックス切り替え：全行の数値 + 係数(〇✕)を連動
+    */
+  document.querySelectorAll('thead .coeffCheck').forEach(headerCb => {
+    headerCb.addEventListener('change', function () {
+      const type = this.getAttribute('data-type');
+      if (type === 'adjust') return;
+
+      const colIndexMap = { 'day': 9, 'night': 10, 'high': 11, 'special': 12, 'waste': 13 };
+      const colIndex = colIndexMap[type];
+
+      const currentRates = getCurrentRates();
+
+      Array.from(constructionTableBody.rows).forEach(row => {
+        if (row.getAttribute('data-item-name') === '駐車場代' || row.cells.length < 17) return;
+
+        const basePrice = parseFloat(row.cells[8].textContent) || 0;
+        const qty = parseFloat(row.cells[4].textContent) || 0;
+        const adjust = parseFloat(row.cells[14].textContent) || 0;
+        const keisuSelect = row.querySelector('.keisu-dropdown');
+
+        // 1. 該当する列の金額を更新
+        if (this.checked) {
+          const rate = currentRates[type] || 0;
+          row.cells[colIndex].textContent = Math.round(basePrice * rate);
+        } else {
+          row.cells[colIndex].textContent = '0';
+        }
+
+        // 2. 係数(〇✕)の自動判定
+        let hasAnyProfit = false;
+        for (let i = 9; i <= 13; i++) {
+          if ((parseFloat(row.cells[i].textContent) || 0) !== 0) {
+            hasAnyProfit = true;
+            break;
+          }
+        }
+
+        if (keisuSelect) {
+          keisuSelect.value = hasAnyProfit ? 'on' : 'off';
+          // 見た目の更新
+          if (hasAnyProfit) {
+            row.style.backgroundColor = "";
+            row.style.color = "";
+            for (let i = 9; i <= 13; i++) row.cells[i].style.opacity = "1";
+          } else {
+            for (let i = 9; i <= 13; i++) row.cells[i].style.opacity = "0.5";
+            row.style.backgroundColor = "#f2f2f2";
+            row.style.color = "#999";
+          }
+        }
+
+        // 3. 確定単価と小計の再計算
+        if (keisuSelect && keisuSelect.value === 'on') {
+          let totalUnitPrice = basePrice;
+          for (let i = 9; i <= 13; i++) {
+            totalUnitPrice += (parseFloat(row.cells[i].textContent) || 0);
+          }
+          row.cells[15].textContent = totalUnitPrice;
+          row.cells[16].textContent = Math.round(totalUnitPrice * qty) + adjust;
+        } else {
+          row.cells[15].textContent = basePrice;
+          row.cells[16].textContent = Math.round(basePrice * qty) + adjust;
+        }
+      });
+
+      updateLaborSubtotal();
+      if (typeof updateAllDisplays === "function") updateAllDisplays();
+    });
+  });
+
+  /**
+  * ★ 駐車場代ロジック等
+  */
   function createParkingRow() {
     const newRow = document.createElement('tr');
     newRow.setAttribute('data-item-name', '駐車場代');
     newRow.className = 'table-custom-light';
     newRow.innerHTML = `
-   <td>
-    <div class="d-flex justify-content-center gap-1">
-     <button type="button" class="btn btn-secondary btn-sm" disabled>直入力</button>
-     <button type="button" class="deleteBtn btn-delete-parking">削除</button>
-    </div>
-   </td>
-   <td></td>
-   <td>駐車場代</td>
-   <td></td>
-   <td class="text-end">
-    <input type="number" class="form-control form-control-sm text-end parking-qty-input" value="1" style="width: 60px; display: inline-block;">
-   </td>
-   <td>式</td>
-   <td></td>
-   <td class="text-end"></td>
-   <td class="text-end">
-    <input type="number" class="form-control form-control-sm text-end parking-direct-input" value="4000" style="width: 80px; display: inline-block;">
-   </td>
-   <td class="text-end profit-cell">0</td>
-   <td class="text-end profit-cell">0</td>
-   <td class="text-end profit-cell">0</td>
-   <td class="text-end profit-cell">0</td>
-   <td class="text-end profit-cell">0</td>
-   <td class="text-end profit-cell">0</td>
-   <td class="text-end fw-bold final-unit-price-cell">4000</td>
-   <td class="text-end fw-bold subtotal-cell">4000</td>
-   <td class="text-center">
-    <select class="form-select form-select-sm keisu-dropdown" disabled>
-     <option value="off" selected>✕</option>
-    </select>
-   </td>
-  `;
+    <td>
+      <div class="d-flex justify-content-center gap-1">
+        <button type="button" class="btn btn-secondary btn-sm" disabled>直入力</button>
+        <button type="button" class="deleteBtn btn-delete-parking">削除</button>
+      </div>
+    </td>
+    <td></td>
+    <td>駐車場代</td>
+    <td></td>
+    <td class="text-end">
+      <input type="number" class="form-control form-control-sm text-end parking-qty-input" value="1" style="width: 60px; display: inline-block;">
+    </td>
+    <td>式</td>
+    <td></td>
+    <td class="text-end"></td>
+    <td class="text-end">
+      <input type="number" class="form-control form-control-sm text-end parking-direct-input" value="4000" style="width: 80px; display: inline-block;">
+    </td>
+    <td class="text-end profit-cell">0</td>
+    <td class="text-end profit-cell">0</td>
+    <td class="text-end profit-cell">0</td>
+    <td class="text-end profit-cell">0</td>
+    <td class="text-end profit-cell">0</td>
+    <td class="text-end profit-cell">0</td>
+    <td class="text-end fw-bold final-unit-price-cell">4000</td>
+    <td class="text-end fw-bold subtotal-cell">4000</td>
+    <td class="text-center">
+      <select class="form-select form-select-sm keisu-dropdown" disabled>
+        <option value="off" selected>✕</option>
+      </select>
+    </td>
+    `;
 
     const updateParkingSubtotal = () => {
       const qtyInput = newRow.querySelector('.parking-qty-input');
@@ -670,8 +857,8 @@ document.addEventListener('DOMContentLoaded', function () {
       newRow.querySelector('.final-unit-price-cell').textContent = price;
       newRow.querySelector('.subtotal-cell').textContent = total;
 
-      updateLaborSubtotal();  // 全体の合計金額を更新
-      updateTotalQuantity();  // 全体の総数を更新
+      updateLaborSubtotal(); // 全体の合計金額を更新
+      updateTotalQuantity(); // 全体の総数を更新
       if (typeof updateAllDisplays === "function") updateAllDisplays();
     };
 
@@ -726,88 +913,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-
   // ==========================================================================
-  // ★ ヘッダーのチェックボックス切り替え：全行の数値 + 係数(〇✕)を連動
-  // ==========================================================================
-  document.querySelectorAll('thead .coeffCheck').forEach(headerCb => {
-    headerCb.addEventListener('change', function () {
-      const type = this.getAttribute('data-type');
-      if (type === 'adjust') return;
-
-      const colIndexMap = { 'day': 9, 'night': 10, 'high': 11, 'special': 12, 'waste': 13 };
-      const colIndex = colIndexMap[type];
-
-      // ★ ここで最新の利率を取得するように変更
-      const currentRates = getCurrentRates();
-
-      Array.from(constructionTableBody.rows).forEach(row => {
-        if (row.getAttribute('data-item-name') === '駐車場代' || row.cells.length < 17) return;
-
-        const basePrice = parseFloat(row.cells[8].textContent) || 0;
-        const qty = parseFloat(row.cells[4].textContent) || 0;
-        const adjust = parseFloat(row.cells[14].textContent) || 0;
-        const keisuSelect = row.querySelector('.keisu-dropdown');
-
-        // 1. 該当する列の金額を更新
-        if (this.checked) {
-          // ★ PROFIT_RATES[type] ではなく currentRates[type] を使う
-          const rate = currentRates[type] || 0;
-          row.cells[colIndex].textContent = Math.round(basePrice * rate);
-        } else {
-          row.cells[colIndex].textContent = '0';
-        }
-
-        // 2. 係数(〇✕)の自動判定
-        let hasAnyProfit = false;
-        for (let i = 9; i <= 13; i++) {
-          if ((parseFloat(row.cells[i].textContent) || 0) !== 0) {
-            hasAnyProfit = true;
-            break;
-          }
-        }
-
-        if (keisuSelect) {
-          keisuSelect.value = hasAnyProfit ? 'on' : 'off';
-          // 見た目の更新
-          if (hasAnyProfit) {
-            row.style.backgroundColor = "";
-            row.style.color = "";
-            for (let i = 9; i <= 13; i++) row.cells[i].style.opacity = "1";
-          } else {
-            for (let i = 9; i <= 13; i++) row.cells[i].style.opacity = "0.5";
-            row.style.backgroundColor = "#f2f2f2";
-            row.style.color = "#999";
-          }
-        }
-
-        // 3. 確定単価と小計の再計算
-        if (keisuSelect && keisuSelect.value === 'on') {
-          let totalUnitPrice = basePrice;
-          for (let i = 9; i <= 13; i++) {
-            totalUnitPrice += (parseFloat(row.cells[i].textContent) || 0);
-          }
-          row.cells[15].textContent = totalUnitPrice;
-          row.cells[16].textContent = Math.round(totalUnitPrice * qty) + adjust;
-        } else {
-          row.cells[15].textContent = basePrice;
-          row.cells[16].textContent = Math.round(basePrice * qty) + adjust;
-        }
-      });
-
-      updateLaborSubtotal();
-      if (typeof updateAllDisplays === "function") updateAllDisplays();
-    });
-  });
-
-  // ==========================================================================
-  // ★ 単価セクション（原価・利益計算）
+  // 6. 単価セクション（原価・利益計算）
   // ==========================================================================
   function updateUnitPriceSection() {
     const getNum = (id) => {
       const el = document.getElementById(id);
       if (!el) return 0;
-      return typeof parseCurrency === 'function' ? parseCurrency(el.value) : 0;
+
+      // input要素ならvalueを、div等ならtextContentを取得
+      const valStr = el.tagName === 'INPUT' ? el.value : el.textContent;
+      if (!valStr) return 0;
+
+      if (typeof parseCurrency === 'function') {
+        return parseCurrency(valStr);
+      } else {
+        return parseFloat(valStr.replace(/[^0-9.-]/g, '')) || 0;
+      }
     };
 
     const setVal = (id, val, isPercent = false) => {
@@ -816,8 +938,36 @@ document.addEventListener('DOMContentLoaded', function () {
       if (isPercent) {
         el.value = val.toFixed(1) + "%";
       } else {
+        // 🔹 金額表示：マイナスの場合は赤文字、それ以外は通常色（#212529）
         el.value = "￥" + Math.round(val).toLocaleString();
+        el.style.setProperty('color', val < 0 ? "#dc3545" : "#212529", 'important');
       }
+    };
+
+    // 🔹 背景色を変更するための補助関数（!importantを付けてHTMLの直接指定を上書き）
+    const updateBgColorByRate = (el, rate) => {
+      if (!el) return;
+      const value = rate / 100; // パーセントを小数に変換
+
+      let bgColor = "#f1f3f5"; // デフォルト・範囲外（グレー）
+      let textColor = "#212529";
+
+      if (value >= 0.3) {
+        bgColor = "#9dd2f9"; // 青 (明るいブルー)
+      } else if (value >= 0.25) {
+        bgColor = "#ffc4d8"; // ピンク
+      } else if (value >= 0.2) {
+        bgColor = "#fff9bc"; // 黄色
+      } else if (value >= 0.15) {
+        bgColor = "#ffe2b4"; // オレンジ
+      } else if (value < 0) {
+        bgColor = "#fbb9c3"; // 赤字（マイナス時）
+        textColor = "#dc3545";
+      }
+
+      // HTML側の !important よりも優先させるために setProperty を使用
+      el.style.setProperty('background-color', bgColor, 'important');
+      el.style.setProperty('color', textColor, 'important');
     };
 
     // 1. 提出見積金額を取得
@@ -858,53 +1008,162 @@ document.addEventListener('DOMContentLoaded', function () {
     setVal('overheadBMaterialCost', totalOverheadB);
     setVal('overheadBMaterialPercentage', totalEstimate > 0 ? (totalOverheadB / totalEstimate * 100) : 0, true);
 
-    // --- 5. 高所作業車等 (HTMLのIDに合わせる) ---
-    const highWorkCost = typeof calculateHighWorkTotal === 'function' ? calculateHighWorkTotal() : 0;
-    setVal('highAltitudeVehicleCost', highWorkCost);
-    setVal('highAltitudeVehiclePercentage', totalEstimate > 0 ? (highWorkCost / totalEstimate * 100) : 0, true);
 
-    // --- 6. 商品・器具 (HTMLのIDに合わせる) ---
+    // --- 5. 高所作業車等 ---
+    const highWorkEl = document.getElementById('highAltitudeVehicleCost');
+    const highWorkPercentEl = document.getElementById('highAltitudeVehiclePercentage');
+    const highWorkAlert = document.getElementById('highWorkAlert');
+
+    // 手入力された金額を取得
+    let highWorkCost = getNum('highAltitudeVehicleCost');
+
+    // 提出見積金額を使って％を計算
+    let highWorkPct = 0;
+    if (totalEstimate > 0) {
+      highWorkPct = (highWorkCost / totalEstimate) * 100;
+    }
+
+    // 表示の更新
+    if (document.activeElement !== highWorkEl) {
+      if (highWorkEl.value !== "") {
+        setVal('highAltitudeVehicleCost', highWorkCost);
+      }
+    }
+
+    // パーセンテージを表示
+    if (highWorkPercentEl) {
+      highWorkPercentEl.value = highWorkPct.toFixed(1) + "%";
+    }
+
+    // 赤文字アラートの表示条件
+    const autoCalcTotal = getNum('displayHighWorkTotal');
+    if (highWorkAlert) {
+      if (autoCalcTotal > 0 && highWorkCost === 0) {
+        highWorkAlert.style.setProperty('display', 'inline', 'important');
+      } else {
+        highWorkAlert.style.setProperty('display', 'none', 'important');
+      }
+    }
+
+    // --- 6. 商品・器具 ---
     const productCost = getNum('displayMaterialA'); // A材の合計
     setVal('productEquipmentCost', productCost);
     setVal('productEquipmentPercentage', totalEstimate > 0 ? (productCost / totalEstimate * 100) : 0, true);
 
-    // --- 7. アーク利益 (HTMLのID: arcProfit, arcProfitPercentage に合わせる) ---
+    // --- 7. アーク利益 ---
+    const arcProfitPctEl = document.getElementById('arcProfitPercentage');
     const totalCosts = totalLaborSum + wasteAmount + totalOverheadB + highWorkCost + productCost;
     const profitAmount = totalEstimate > 0 ? (totalEstimate - totalCosts) : 0;
+    const arcProfitRate = totalEstimate > 0 ? (profitAmount / totalEstimate * 100) : 0;
 
     setVal('arcProfit', profitAmount);
-    setVal('arcProfitPercentage', totalEstimate > 0 ? (profitAmount / totalEstimate * 100) : 0, true);
+    setVal('arcProfitPercentage', arcProfitRate, true);
+
+    // 🔹 アーク利益率の背景色更新
+    updateBgColorByRate(arcProfitPctEl, arcProfitRate);
 
     // --- 8. 報酬金 ---
     let reward = 0;
     let rewardPct = 0;
 
-    // Excel式: =IF(T53>=100000, ROUNDDOWN(T53*0.01, -3), "")
-    // profitAmount(アーク利益)が10万円以上の時のみ計算
     if (profitAmount >= 100000) {
-      // 1%を掛けてから1,000円単位で切り捨て
       reward = Math.floor((profitAmount * 0.01) / 1000) * 1000;
-
-      // 報酬金 ÷ アーク利益
       if (profitAmount > 0) {
         rewardPct = (reward / profitAmount) * 100;
       }
     }
 
-    // 表示の反映（10万円未満なら空文字にする）
+    // --- 9. 工事のみ利益 ---
+    const constructionProfitEl = document.getElementById('constructionOnlyProfit');
+    const constructionPctEl = document.getElementById('constructionOnlyPercentage');
+    const aMaterialCheck = document.getElementById('aMaterialCheck');
+
+    const laborRev = getNum('displayLaborTotal');
+    const discount = getNum('budgetDiscount');
+    const highWorkRev = getNum('displayHighWorkTotal');
+
+    let constructionProfit = 0;
+    let constructionPct = 0;
+
+    if (aMaterialCheck && aMaterialCheck.checked) {
+      const totalRev = laborRev + discount + highWorkRev;
+      const totalCost = totalLaborSum + highWorkCost + wasteAmount + totalOverheadB;
+
+      constructionProfit = totalRev - totalCost;
+
+      if (totalRev !== 0) {
+        constructionPct = (constructionProfit / totalRev) * 100;
+      }
+    } else {
+      constructionProfit = profitAmount;
+      constructionPct = arcProfitRate;
+    }
+
+    // 表示の反映
+    setVal('constructionOnlyProfit', constructionProfit);
+
+    if (constructionPctEl) {
+      constructionPctEl.value = constructionPct.toFixed(1) + "%";
+      // 🔹 工事のみ利益率の背景色更新
+      updateBgColorByRate(constructionPctEl, constructionPct);
+    }
+
+    // --- 10. 商品のみ利益 ---
+    const productProfitEl = document.getElementById('productOnlyProfit');
+    const productPctEl = document.getElementById('productOnlyPercentage');
+
+    // 式: 提出見積 - (人工・外注費 + 高所等 + 商品器具 + 産廃)
+    const productOnlyProfit = totalEstimate - (totalLaborSum + highWorkCost + productCost + wasteAmount);
+
+    // 表示の反映
+    setVal('productOnlyProfit', productOnlyProfit);
+
+    if (productPctEl) {
+      if (aMaterialCheck && aMaterialCheck.checked) {
+        const aTotalProfit = getNum('a-totalProfit');
+        const aTotalAmount = getNum('a-totalAmount');
+        if (aTotalAmount > 0) {
+          const pPct = (aTotalProfit / aTotalAmount) * 100;
+          productPctEl.value = pPct.toFixed(1) + "%";
+          productPctEl.style.color = pPct < 0 ? "#dc3545" : "#212529";
+        } else {
+          productPctEl.value = "0.0%";
+        }
+      } else {
+        productPctEl.value = "";
+        productPctEl.style.setProperty('background-color', '#f1f3f5', 'important');
+      }
+    }
+
+    // 報酬金の表示反映
     const rewardInput = document.getElementById('rewardAmount');
     const rewardPctInput = document.getElementById('rewardPercentage');
 
     if (rewardInput) {
-      rewardInput.value = profitAmount >= 100000 ? "￥" + reward.toLocaleString() : "";
+      // 報酬金計算（10万円未満なら非表示、そうでなければsetValで赤字判定込表示）
+      if (profitAmount >= 100000) {
+        setVal('rewardAmount', reward);
+      } else {
+        rewardInput.value = "";
+      }
     }
     if (rewardPctInput) {
       rewardPctInput.value = profitAmount >= 100000 ? rewardPct.toFixed(1) + "%" : "";
     }
   }
 
+  // --- 監視役の追加 ---
+  document.getElementById('highAltitudeVehicleCost')?.addEventListener('input', updateUnitPriceSection);
+  document.getElementById('highAltitudeVehicleCost')?.addEventListener('blur', updateUnitPriceSection);
+  document.getElementById('aMaterialCheck')?.addEventListener('change', updateUnitPriceSection);
+  document.getElementById('budgetDiscount')?.addEventListener('input', updateUnitPriceSection);
+  document.getElementById('finalEstimatedPrice')?.addEventListener('input', updateUnitPriceSection);
+  document.querySelectorAll('.a-material-input').forEach(input => {
+    input.addEventListener('input', updateUnitPriceSection);
+  });
+
   // ==========================================================================
-  // ★ 工事日数表（自動計算・集計・行操作）
+  // 7. 工事日数表（自動計算・集計・行操作）
   // ==========================================================================
   function updateFinancialTotals() {
     const unitPriceRow = document.querySelector('.row-unit-price');
@@ -937,7 +1196,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       let finalTotal = 0;
 
-      // ★修正ポイント：人数（totalDays）が1人以上の時だけ計算を実行する
+      // 人数が1人以上の時だけ計算を実行する
       if (totalDays > 0) {
         if (index < 5) {
           // 自社：単価 × 人数
@@ -957,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', function () {
         totalInput.value = finalTotal > 0 ? finalTotal.toLocaleString() : "0";
       }
     });
-    // ★ここに追加：日数表の合計が変わったので単価セクションも更新する
+
     updateUnitPriceSection();
   }
 
@@ -971,7 +1230,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // --- 2. 行を作成する関数 ---
-
   // [上の表：出勤管理]
   function createAttendanceRow(rowNumber) {
     const tr = document.createElement('tr');
@@ -1001,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', function () {
           this.style.lineHeight = '40px';
         }
         updateAttendanceCounts();
-        calculateTargets(); // 人数が変わったら計算も更新
+        calculateTargets();
       });
     });
     return tr;
@@ -1013,26 +1271,26 @@ document.addEventListener('DOMContentLoaded', function () {
     tr.setAttribute('data-row', rowNumber);
 
     tr.innerHTML = `
-  <th class="table-secondary text-center py-2 fw-bold head-col" style="border: 1px solid #dee2e6 !important;">
-   ${rowNumber}日目 / 0人
-  </th>
-  <td class="p-1" style="border: 1px solid #dee2e6 !important;">
-   <input type="text" class="form-control text-center shadow-none bg-light target-daily-input" readonly>
-  </td>
-  <td class="p-1" style="border: 1px solid #dee2e6 !important;">
-   <input type="text" class="form-control text-center shadow-none bg-light target-total-display" readonly>
-  </td>
-  <td class="p-1" style="border: 1px solid #dee2e6 !important;">
-   <input type="text" class="form-control text-center shadow-none bg-light target-per-person-display" readonly>
-  </td>
-  <td class="p-1" style="border: 1px solid #dee2e6 !important;">
-   <input type="text" class="form-control text-center shadow-none px-2 target-date-input"
-    placeholder="日付選択" 
-    onfocus="this.type='date'" 
-    onchange="this.type='text'; calculateTargets();"
-    onblur="this.type='text'; calculateTargets();">
-  </td>
- `;
+    <th class="table-secondary text-center py-2 fw-bold head-col" style="border: 1px solid #dee2e6 !important;">
+      ${rowNumber}日目 / 0人
+    </th>
+    <td class="p-1" style="border: 1px solid #dee2e6 !important;">
+      <input type="text" class="form-control text-center shadow-none bg-light target-daily-input" readonly>
+    </td>
+    <td class="p-1" style="border: 1px solid #dee2e6 !important;">
+      <input type="text" class="form-control text-center shadow-none bg-light target-total-display" readonly>
+    </td>
+    <td class="p-1" style="border: 1px solid #dee2e6 !important;">
+      <input type="text" class="form-control text-center shadow-none bg-light target-per-person-display" readonly>
+    </td>
+    <td class="p-1" style="border: 1px solid #dee2e6 !important;">
+    <input type="text" class="form-control text-center shadow-none px-2 target-date-input"
+      placeholder="日付選択" 
+      onfocus="this.type='date'" 
+      onchange="this.type='text'; calculateTargets();"
+      onblur="this.type='text'; calculateTargets();">
+    </td>
+    `;
     return tr;
   }
 
@@ -1054,7 +1312,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalQtyInput = document.getElementById('totalQuantityDisplay');
     const constructionDaysInput = document.getElementById('constructionDays');
     const targetRows = document.querySelectorAll('#target-schedule-body tr');
-
     const totalQty = parseFloat(totalQtyInput?.value.replace(/[^0-9.]/g, '')) || 0;
     const totalDays = parseInt(constructionDaysInput?.value) || 0;
 
@@ -1095,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // --- 指定された行（startIndex）を起点に、それ以降の行の日付を翌日連鎖させる ---
+  // --- 指定された行を起点に、それ以降の行の日付を翌日連鎖させる ---
   function syncDatesFromRow(startIndex) {
     const targetRows = document.querySelectorAll('#target-schedule-body tr');
     if (!targetRows[startIndex]) return;
@@ -1107,7 +1364,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (isNaN(baseDate.getTime())) return;
 
-    // 起点となった行を整形
     dateInput.value = formatFullDateWithDay(baseDate);
 
     // 次の行から最後までループして「前日の翌日」をセットしていく
@@ -1131,7 +1387,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- 入力時のイベントトリガー ---
   document.addEventListener('change', function (e) {
     // 日付入力欄が変更された場合
-
     if (e.target.classList.contains('target-date-input')) {
       const row = e.target.closest('tr');
       const rows = Array.from(document.querySelectorAll('#target-schedule-body tr'));
@@ -1169,8 +1424,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('startDate')?.addEventListener('change', function (e) {
     const firstDateInput = document.querySelector('#target-schedule-body .target-date-input');
     if (firstDateInput) {
-      firstDateInput.value = e.target.value; // カレンダーの値を1行目にセット
-      syncDatesFromRow(0); // 1行目から全連動を開始
+      firstDateInput.value = e.target.value;
+      syncDatesFromRow(0);
     }
     calculateTargets();
   });
@@ -1216,14 +1471,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-
-
-  // 初回実行
-
   calculateTargets();
 
   // --- 5. 人数集計関数 (上下の同期) ---
-
   function updateAttendanceCounts() {
     const table = document.querySelector('.attendance-table');
     if (!table) return;
@@ -1302,7 +1552,7 @@ document.addEventListener('DOMContentLoaded', function () {
   updateAttendanceCounts();
 
   // ==========================================================================
-  // 5. 反映処理ロジック
+  // 8. 反映処理ロジック
   // ==========================================================================
   // --- 画面上の全ての金額表示と最終合計金額（提出見積金額）を更新するメイン関数 ---
   function updateAllDisplays() {
@@ -1348,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (finalEstimatedPrice) {
       finalEstimatedPrice.value = `￥${finalSum.toLocaleString()}`;
     }
-    // ★ここに追加：全体金額が変わったので単価セクションも更新する
+
     updateUnitPriceSection();
   }
 
@@ -1362,7 +1612,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // --- 高所作業車テーブルのチェックされた行から合計金額を算出する ---
-
   function calculateHighWorkTotal() {
     if (!highWorkCarCheck?.checked) return 0;
     let total = 0;
@@ -1384,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const rawValue = el.value.replace(/[^0-9-]/g, '');
     const num = parseFloat(rawValue) || 0;
 
-    // 入力値が正の数であっても、計算上は値引き（マイナス）として扱う安全策
+    // 入力値が正の数であっても、計算上は値引き（マイナス）
     return num > 0 ? -num : num;
   }
 
@@ -1397,7 +1646,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     if (laborSubtotal) {
       laborSubtotal.value = total;
-      // 施工内容の変更をトリガーに、値引きも含めた全体計算を再実行
+
       updateAllDisplays();
     }
   }
@@ -1432,22 +1681,17 @@ document.addEventListener('DOMContentLoaded', function () {
   updateAllDisplays();
   syncHeaderCheckboxes();
   updateUnitPriceSection();
-
-
+  updateItemNameOptions();
 
   // --- ページ読み込み完了後に、各入力フィールドへのイベント設定（リアルタイム連動）を行う ---
-  // Bootstrap ツールチップ初期化
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl)
   });
 
-  const budgetDiscountInput = document.getElementById('budgetDiscount');
   const surveyFeeInput = document.getElementById('surveyFee');
 
-  // フォーカス時・フォーカスアウト時の挙動（入力補助）
   [budgetDiscountInput, surveyFeeInput].forEach(input => {
-    // そもそも要素が存在しない、あるいは日付入力（type="date"等）ならスキップする
     if (!input || input.type === 'date' || input.classList.contains('flatpickr-input')) return;
 
     let previousValue = "";
@@ -1461,36 +1705,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     input.addEventListener('blur', function () {
-      // 🔹 修正：値が空になった場合のみ、元の値(previousValue)に戻す
-      // これにより「やっぱりやめた」時に値が消えるのを防ぎます
       if (this.value.trim() === '' || this.value === '-') {
         this.value = previousValue;
       }
 
-      // それでもまだ空（最初から空だった場合など）なら '0' を入れる
       if (this.value.trim() === '') {
         this.value = '0';
       }
 
       if (typeof updateAllDisplays === 'function') updateAllDisplays();
     });
-  });
-
-  // ==========================================================================
-  // ★ 値引き入力時のリアルタイム処理
-  // ==========================================================================
-  budgetDiscountInput?.addEventListener('input', function () {
-    // 1. 数字以外を削除（意図しない記号の混入を防止）
-    let num = this.value.replace(/[^0-9]/g, '');
-
-    // 2. 常に頭に「-」をつけて表示。空なら空にする
-    if (num !== '') {
-      this.value = '-' + num;
-    } else {
-      this.value = '';
-    }
-
-    // 3. 🔹この瞬間に計算を実行することで、新規登録を待たずにリアルタイム反映🔹
-    updateAllDisplays();
   });
 });

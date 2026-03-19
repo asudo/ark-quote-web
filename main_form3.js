@@ -2,11 +2,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // A材(prefix: 'a')とB材(prefix: 'b')の各フォームを初期化
   setupMaterialForm('a');
   setupMaterialForm('b');
+
+  // ★ A材：売価係数が変更された際の一括更新イベント
+  const aCoeffInput = document.getElementById('a-sell-coefficient');
+  if (aCoeffInput) {
+    aCoeffInput.addEventListener('input', () => {
+      updateAllAItemsByCoefficient();
+    });
+  }
 });
 
 /**
-* 材別のフォーム制御メイン関数
-*/
+ * 材別のフォーム制御メイン関数
+ */
 function setupMaterialForm(prefix) {
   const form = document.getElementById(`${prefix}-inputForm`);
   const tableBody = document.getElementById(`${prefix}-itemTableBody`);
@@ -14,9 +22,20 @@ function setupMaterialForm(prefix) {
 
   if (!form || !tableBody || !modalElement) return;
 
-  let itemCount = 1;
   let editRow = null;
-  // HTML側で「新規入力」ボタンに data-bs-target が設定されていることを前提としています
+
+  // --- 次のNoを動的に計算するヘルパー ---
+  function getNextNumber() {
+    const rows = tableBody.querySelectorAll("tr:not(:has(td[colspan]))");
+    let maxNo = 1; // 自動生成が1を使うため、最低1からスタート
+    rows.forEach(row => {
+      const no = parseInt(row.cells[1]?.textContent);
+      if (!isNaN(no) && no > maxNo) maxNo = no;
+    });
+    return maxNo + 1;
+  }
+
+  // --- 0. モーダル起動時の初期化設定（新規入力ボタン） ---
   const addButtons = document.querySelectorAll(`[data-bs-target="#${prefix}-inputModal"]`);
   addButtons.forEach(btn => {
     btn.addEventListener("click", () => {
@@ -26,7 +45,9 @@ function setupMaterialForm(prefix) {
       // モーダルのタイトルとボタンを「新規」用の表示に戻す
       const modalTitle = modalElement.querySelector(".modal-title");
       const submitBtn = form.querySelector('button[type="submit"]');
-      if (modalTitle) modalTitle.textContent = `新規入力：${prefix.toUpperCase()}材`;
+
+      const nextNo = getNextNumber();
+      if (modalTitle) modalTitle.textContent = `新規入力：${prefix.toUpperCase()}材 (No.${nextNo})`;
       if (submitBtn) submitBtn.textContent = "登録完了";
     });
   });
@@ -61,29 +82,43 @@ function setupMaterialForm(prefix) {
     const emptyRow = tableBody.querySelector('td[colspan]');
     if (emptyRow) { tableBody.innerHTML = ''; }
 
+    // 新規登録時はその時点の最大No+1を割り振る
+    const currentNo = editRow ? editRow.cells[1].textContent : getNextNumber();
+
     // テーブルに挿入するHTMLの組み立て
     const rowHtml = `
-   <td>
-    <div class="d-flex justify-content-center gap-1">
-     <button type="button" class="editBtn btn btn-sm btn-outline-primary">編集</button>
-     <button type="button" class="deleteBtn btn btn-sm btn-outline-danger">削除</button>
-    </div>
-   </td>
-   <td>${editRow ? editRow.children[1].textContent : itemCount++}</td>
-   <td>${data.name}</td><td>${data.spec}</td><td>${data.quantity}</td><td>${data.unit}</td>
-   <td>${data.unitPrice}</td><td>${data.amount}</td><td>${data.remark}</td>
-   <td>${data.listPrice}</td><td>${data.listTotal}</td><td>${data.costPrice}</td>
-   <td>${data.costTotal}</td><td>${data.costRate}</td><td>${data.sellRate}</td>
-   <td>${data.itemName}</td><td>${data.actual}</td><td>${data.company}</td>
-  `;
+      <td>
+        <div class="d-flex justify-content-center gap-1">
+          <button type="button" class="editBtn btn btn-sm btn-outline-primary">編集</button>
+          <button type="button" class="deleteBtn btn btn-sm btn-outline-danger">削除</button>
+        </div>
+      </td>
+      <td>${currentNo}</td>
+      <td>${data.name}</td>
+      <td>${data.spec}</td>
+      <td class="text-end">${data.quantity.toLocaleString()}</td>
+      <td>${data.unit}</td>
+      <td class="text-end">${data.unitPrice.toLocaleString()}</td>
+      <td class="text-end">${data.amount.toLocaleString()}</td>
+      <td>${data.remark}</td>
+      <td class="text-end">${data.listPrice.toLocaleString()}</td>
+      <td class="text-end">${data.listTotal}</td>
+      <td class="text-end">${data.costPrice.toLocaleString()}</td>
+      <td class="text-end">${data.costTotal}</td>
+      <td class="text-end">${data.costRate}</td>
+      <td class="text-end">${data.sellRate}</td>
+      <td>${data.itemName}</td>
+      <td>${data.actual}</td>
+      <td>${data.company}</td>
+    `;
 
     if (editRow) {
-      // 編集モード：既存の行を書き換え
+      // 編集モード
       editRow.innerHTML = rowHtml;
       attachRowEvents(editRow, prefix);
       editRow = null;
     } else {
-      // 新規モード：新しい行を追加
+      // 新規モード
       const newRow = document.createElement("tr");
       if (data.remark === "※自動生成データ") {
         newRow.classList.add("initial-data-row");
@@ -96,41 +131,47 @@ function setupMaterialForm(prefix) {
     // 表の下にある合計欄を再計算
     calculateTotals(prefix);
 
-    // モーダルを閉じて中身を空にする
-    const modalInstance = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
-    modalInstance.hide();
+    // モーダルを閉じる
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+    if (modalInstance) modalInstance.hide();
     form.reset();
   });
 
   // --- 2. 編集・削除ボタンのイベント登録 ---
   function attachRowEvents(row, prefix) {
     // 編集ボタン：行のデータを取り出してモーダルにセット
-    row.querySelector(".editBtn").addEventListener("click", () => {
-      editRow = row;
-      const cells = row.children;
-      document.getElementById(`${prefix}-modal-name`).value = cells[2].textContent;
-      document.getElementById(`${prefix}-modal-spec`).value = cells[3].textContent;
-      document.getElementById(`${prefix}-modal-quantity`).value = cells[4].textContent;
-      document.getElementById(`${prefix}-modal-unit`).value = cells[5].textContent;
-      document.getElementById(`${prefix}-modal-unitPrice`).value = cells[6].textContent;
-      document.getElementById(`${prefix}-modal-remark`).value = cells[8].textContent;
-      document.getElementById(`${prefix}-modal-listPrice`).value = cells[9].textContent;
-      document.getElementById(`${prefix}-modal-costPrice`).value = cells[11].textContent;
-      document.getElementById(`${prefix}-modal-itemName`).value = cells[15].textContent;
-      document.getElementById(`${prefix}-modal-actual`).value = cells[16].textContent;
-      document.getElementById(`${prefix}-modal-company`).value = cells[17].textContent;
+    const editBtn = row.querySelector(".editBtn");
+    if (editBtn) {
+      editBtn.addEventListener("click", () => {
+        editRow = row;
+        const cells = row.children;
+        document.getElementById(`${prefix}-modal-name`).value = cells[2].textContent;
+        document.getElementById(`${prefix}-modal-spec`).value = cells[3].textContent;
+        document.getElementById(`${prefix}-modal-quantity`).value = cells[4].textContent;
+        document.getElementById(`${prefix}-modal-unit`).value = cells[5].textContent;
+        document.getElementById(`${prefix}-modal-unitPrice`).value = cells[6].textContent.replace(/,/g, '');
+        document.getElementById(`${prefix}-modal-remark`).value = cells[8].textContent;
+        document.getElementById(`${prefix}-modal-listPrice`).value = cells[9].textContent.replace(/,/g, '');
+        document.getElementById(`${prefix}-modal-costPrice`).value = cells[11].textContent.replace(/,/g, '');
+        document.getElementById(`${prefix}-modal-itemName`).value = cells[15].textContent;
+        document.getElementById(`${prefix}-modal-actual`).value = cells[16].textContent;
+        document.getElementById(`${prefix}-modal-company`).value = cells[17].textContent;
 
-      const modalInstance = new bootstrap.Modal(modalElement);
-      modalInstance.show();
-    });
+        const modalInstance = new bootstrap.Modal(modalElement);
+        modalInstance.show();
+      });
+    }
 
     // 削除ボタン
-    row.querySelector(".deleteBtn").addEventListener("click", () => {
-      if (confirm("本当に削除しますか？")) {
-        row.remove();
-        calculateTotals(prefix);
-      }
-    });
+    const deleteBtn = row.querySelector(".deleteBtn");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", () => {
+        if (confirm("本当に削除しますか？")) {
+          row.remove();
+          calculateTotals(prefix);
+        }
+      });
+    }
   }
 
   // --- 3. 合計計算処理（テーブル全体の集計） ---
@@ -149,13 +190,26 @@ function setupMaterialForm(prefix) {
     const profit = tAmount - tCost;
 
     // 各合計ラベルに数値を反映（カンマ区切り）
-    document.getElementById(`${prefix}-totalAmount`).textContent = `¥${tAmount.toLocaleString()}`;
-    document.getElementById(`${prefix}-totalListPrice`).textContent = `¥${tList.toLocaleString()}`;
-    document.getElementById(`${prefix}-totalCostPrice`).textContent = `¥${tCost.toLocaleString()}`;
-    document.getElementById(`${prefix}-totalCostRate`).textContent = tList ? (tCost / tList * 100).toFixed(2) + "%" : "0%";
-    document.getElementById(`${prefix}-totalSellRate`).textContent = tList ? (tAmount / tList * 100).toFixed(2) + "%" : "0%";
-    document.getElementById(`${prefix}-totalProfit`).textContent = `¥${profit.toLocaleString()}`;
-    document.getElementById(`${prefix}-totalProfitRate`).textContent = tAmount ? (profit / tAmount * 100).toFixed(2) + "%" : "0%";
+    const totalAmtEl = document.getElementById(`${prefix}-totalAmount`);
+    if (totalAmtEl) totalAmtEl.textContent = `¥${tAmount.toLocaleString()}`;
+
+    const totalListEl = document.getElementById(`${prefix}-totalListPrice`);
+    if (totalListEl) totalListEl.textContent = `¥${tList.toLocaleString()}`;
+
+    const totalCostEl = document.getElementById(`${prefix}-totalCostPrice`);
+    if (totalCostEl) totalCostEl.textContent = `¥${tCost.toLocaleString()}`;
+
+    const costRateEl = document.getElementById(`${prefix}-totalCostRate`);
+    if (costRateEl) costRateEl.textContent = tList ? (tCost / tList * 100).toFixed(2) + "%" : "0%";
+
+    const sellRateEl = document.getElementById(`${prefix}-totalSellRate`);
+    if (sellRateEl) sellRateEl.textContent = tList ? (tAmount / tList * 100).toFixed(2) + "%" : "0%";
+
+    const profitEl = document.getElementById(`${prefix}-totalProfit`);
+    if (profitEl) profitEl.textContent = `¥${profit.toLocaleString()}`;
+
+    const profitRateEl = document.getElementById(`${prefix}-totalProfitRate`);
+    if (profitRateEl) profitRateEl.textContent = tAmount ? (profit / tAmount * 100).toFixed(2) + "%" : "0%";
 
     // 予算書などの外部表示と同期
     if (window.syncMaterialTotals) window.syncMaterialTotals();
@@ -175,139 +229,284 @@ function setupMaterialForm(prefix) {
     const cost = Number(document.getElementById(`${prefix}-modal-costPrice`).value);
     const actualStr = document.getElementById(`${prefix}-modal-actual`).value;
 
-    document.getElementById(`${prefix}-modal-amount`).value = (uprice * qty) || "";
-    document.getElementById(`${prefix}-modal-costTotal`).value = (actualStr !== "") ? (cost * Number(actualStr)) : (cost * qty);
-    document.getElementById(`${prefix}-modal-listTotal`).value = (list > 0) ? (list * qty) : "";
+    const amtEl = document.getElementById(`${prefix}-modal-amount`);
+    if (amtEl) amtEl.value = (uprice * qty) || "";
 
+    const costTotEl = document.getElementById(`${prefix}-modal-costTotal`);
+    if (costTotEl) costTotEl.value = (actualStr !== "") ? (cost * Number(actualStr)) : (cost * qty);
+
+    const listTotEl = document.getElementById(`${prefix}-modal-listTotal`);
+    if (listTotEl) listTotEl.value = (list > 0) ? (list * qty) : "";
+
+    const cRateEl = document.getElementById(`${prefix}-modal-costRate`);
+    const sRateEl = document.getElementById(`${prefix}-modal-sellRate`);
     if (list > 0) {
-      document.getElementById(`${prefix}-modal-costRate`).value = ((cost / list) * 100).toFixed(2) + "%";
-      document.getElementById(`${prefix}-modal-sellRate`).value = ((uprice / list) * 100).toFixed(2) + "%";
+      if (cRateEl) cRateEl.value = ((cost / list) * 100).toFixed(2) + "%";
+      if (sRateEl) sRateEl.value = ((uprice / list) * 100).toFixed(2) + "%";
     } else {
-      document.getElementById(`${prefix}-modal-costRate`).value = "";
-      document.getElementById(`${prefix}-modal-sellRate`).value = "";
+      if (cRateEl) cRateEl.value = "";
+      if (sRateEl) sRateEl.value = "";
     }
   }
 
-  // --- 5. A材専用：入力時の連動（定価から入値・単価を自動算出） ---
-  const fields = ['quantity', 'listPrice', 'unitPrice', 'costPrice', 'actual'];
-  fields.forEach(f => {
+  // 全材料共通の入力監視イベント設定
+  const fieldsToWatch = ['quantity', 'listPrice', 'unitPrice', 'costPrice', 'actual'];
+  fieldsToWatch.forEach(f => {
     const el = document.getElementById(`${prefix}-modal-${f}`);
     if (el) {
       el.addEventListener("input", (e) => {
-        if (prefix === 'a') {
-          if (f === 'listPrice') {
-            const listValue = Number(el.value);
-            if (listValue > 0) {
-              const autoCostPrice = Math.floor(listValue * 0.2); // 入値は定価の20%
-              document.getElementById(`${prefix}-modal-costPrice`).value = autoCostPrice;
-              document.getElementById(`${prefix}-modal-unitPrice`).value = Math.ceil((autoCostPrice * 1.3) / 100) * 100; // 単価は入値の1.3倍(百円単位切り上げ)
-            }
-          }
-          if (f === 'costPrice') {
-            const costValue = Number(el.value);
-            if (costValue > 0) {
-              document.getElementById(`${prefix}-modal-unitPrice`).value = Math.ceil((costValue * 1.3) / 100) * 100;
-            }
-          }
-        }
+        if (prefix === 'a') return; // A材は専用ロジックがあるためスキップ
         updateAutoFields(e);
       });
     }
   });
 
+  // --- 5. A材専用：入力時の連動（スイッチ・バッジテキスト・ツールチップ連動版） ---
+  if (prefix === 'a') {
+    /**
+     * 売価係数（1.3など）に合わせてバッジとはてなアイコンのテキストを更新する
+     */
+    function updateAMaterialLabels() {
+      const coeffInput = document.getElementById('a-sell-coefficient');
+      const val = coeffInput ? (parseFloat(coeffInput.value) || 1.3) : 1.3;
+      const newText = `下のスイッチがONなら「入値 × ${val}」で自動算出されます。OFFにすると好きな金額を入力・固定できます。`;
+
+      const badge = document.querySelector('label[for="a-auto-unit-check"] .badge');
+      if (badge) badge.textContent = `入値×${val}`;
+
+      const icon = document.getElementById('a-unit-tooltip-icon');
+      if (icon) {
+        icon.setAttribute('title', newText);
+        icon.setAttribute('data-bs-original-title', newText);
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+          let instance = bootstrap.Tooltip.getInstance(icon);
+          if (instance) {
+            instance._config.title = newText;
+          } else {
+            new bootstrap.Tooltip(icon);
+          }
+        }
+      }
+    }
+
+    // A材専用：入力フィールド連動
+    const aFields = ['quantity', 'listPrice', 'unitPrice', 'costPrice', 'actual'];
+    aFields.forEach(f => {
+      const el = document.getElementById(`a-modal-${f}`);
+      if (el) {
+        el.addEventListener("input", (e) => {
+          const coeffInput = document.getElementById('a-sell-coefficient');
+          const coefficient = coeffInput ? (parseFloat(coeffInput.value) || 1.3) : 1.3;
+
+          const listPriceInput = document.getElementById('a-modal-listPrice');
+          const costInput = document.getElementById('a-modal-costPrice');
+          const unitPriceInput = document.getElementById('a-modal-unitPrice');
+          const qtyInput = document.getElementById('a-modal-quantity');
+          const actualInput = document.getElementById('a-modal-actual');
+
+          const isAutoCost = document.getElementById('a-auto-cost-check')?.checked;
+          const isAutoUnit = document.getElementById('a-auto-unit-check')?.checked;
+
+          if (f === 'listPrice') {
+            const listValue = Number(el.value);
+            if (listValue > 0 && isAutoCost && costInput) {
+              costInput.value = Math.floor(listValue * 0.2);
+              if (isAutoUnit && unitPriceInput) {
+                unitPriceInput.value = Math.ceil((Number(costInput.value) * coefficient) / 100) * 100;
+              }
+            }
+          }
+
+          if (f === 'costPrice' && isAutoUnit && unitPriceInput) {
+            const costValue = Number(el.value);
+            if (costValue > 0) {
+              unitPriceInput.value = Math.ceil((costValue * coefficient) / 100) * 100;
+            }
+          }
+
+          updateAutoFields(e);
+        });
+      }
+    });
+
+    // スイッチの連動
+    const aToggles = ['a-auto-unit-check', 'a-auto-cost-check'];
+    aToggles.forEach(id => {
+      const checkEl = document.getElementById(id);
+      if (checkEl) {
+        checkEl.addEventListener('change', function () {
+          const label = document.querySelector(`label[for="${id}"]`);
+          const badge = label ? label.querySelector('.badge') : null;
+          if (badge) {
+            if (this.checked) {
+              badge.style.setProperty('border-color', '#0d6efd', 'important');
+              badge.style.setProperty('color', '#0d6efd', 'important');
+              badge.style.setProperty('opacity', '1', 'important');
+              badge.style.setProperty('background-color', '#fff', 'important');
+            } else {
+              badge.style.setProperty('border-color', '#6c757d', 'important');
+              badge.style.setProperty('color', '#6c757d', 'important');
+              badge.style.setProperty('opacity', '0.6', 'important');
+              badge.style.setProperty('background-color', '#f8f9fa', 'important');
+            }
+          }
+          document.getElementById('a-modal-listPrice')?.dispatchEvent(new Event('input'));
+        });
+      }
+    });
+
+    document.getElementById('a-sell-coefficient')?.addEventListener('input', () => {
+      updateAMaterialLabels();
+      document.getElementById('a-modal-costPrice')?.dispatchEvent(new Event('input'));
+    });
+  }
+
   // --- 6. B材限定：自動データ投入ロジック ---
   if (prefix === 'b') {
     const injectInitialData = (forceUpdate = false) => {
-      // 工事種類（電気or空調）を確認
       const koujiEl = document.querySelector('input[name="koujiType"]:checked');
       if (!koujiEl) return;
       const selectedKouji = koujiEl.value;
-
-      // 小計(laborSubtotal)の値を取得して数値化
       const p29El = document.getElementById('laborSubtotal');
       const p29Value = p29El ? parseFloat(p29El.value.replace(/[^0-9.-]+/g, "")) || 0 : 0;
 
-      // 入値の計算（小計に基づいた丸め処理）
       let calculatedCost = 0;
       if (p29Value > 0) {
         const roundPos = p29Value > 50000 ? 10000 : 1000;
         calculatedCost = Math.ceil(p29Value / roundPos) * roundPos - p29Value;
       }
 
-      // 単価・名称・規格を工事種類によって出し分け
       let calculatedUnitPrice = (selectedKouji === "空調工事") ? 0 : ((calculatedCost === 0) ? 1000 : calculatedCost);
-      let itemName = (selectedKouji === "電気工事") ? "消耗雑雑費" : "冷媒配管";
+      let itemName = (selectedKouji === "電気工事") ? "消耗雑材費" : "冷媒配管";
       let itemSpec = (selectedKouji === "電気工事") ? "消耗雑材" : "";
 
-      // 重複チェック（既に同じデータがあれば更新しない）
-      const targetRow = tableBody.querySelector(".initial-data-row") || (tableBody.rows.length > 0 && !tableBody.querySelector('td[colspan]') ? tableBody.rows[0] : null);
-      if (targetRow && targetRow.children.length >= 12) {
-        const prevCost = parseFloat(targetRow.children[11].textContent) || 0;
-        const prevName = targetRow.children[2].textContent;
+      let targetRow = tableBody.querySelector(".initial-data-row");
+
+      // 重複・更新チェック（入値もチェック対象に含める）
+      if (targetRow) {
+        const prevName = targetRow.cells[2]?.textContent;
+        const prevCost = parseFloat(targetRow.cells[11]?.textContent.replace(/,/g, '')) || 0;
         if (!forceUpdate && prevName === itemName && prevCost === calculatedCost) return;
       }
 
-      if (targetRow) editRow = targetRow;
-      else editRow = null;
-
-      // モーダルへ値をセット
       const initialItem = {
-        name: itemName, spec: itemSpec, quantity: (selectedKouji === "電気工事") ? 1 : 0,
+        name: itemName,
+        spec: itemSpec,
+        quantity: (selectedKouji === "電気工事") ? 1 : 0,
         unit: (selectedKouji === "電気工事") ? "式" : "",
-        unitPrice: calculatedUnitPrice, remark: "", listPrice: "", costPrice: calculatedCost,
-        itemName: "", actual: "", company: ""
+        unitPrice: calculatedUnitPrice,
+        costPrice: calculatedCost,
+        remark: "自動生成",
+        amount: ((selectedKouji === "電気工事") ? 1 : 0) * calculatedUnitPrice
       };
 
-      Object.keys(initialItem).forEach(key => {
-        const el = document.getElementById(`${prefix}-modal-${key}`);
-        if (el) el.value = initialItem[key];
-      });
+      // 自動生成行のHTML組み立て
+      const rowHtml = `
+      <td>
+        <div class="d-flex justify-content-center gap-1">
+          <button type="button" class="btn btn-sm btn-secondary" style="pointer-events: none;">自動</button>
+          <button type="button" class="deleteBtn btn btn-sm btn-outline-danger">削除</button>
+        </div>
+      </td>
+      <td class="bg-light">1</td>
+      <td class="bg-light">${initialItem.name}</td>
+      <td class="bg-light">${initialItem.spec}</td>
+      <td class="bg-light text-end">${initialItem.quantity}</td>
+      <td class="bg-light">${initialItem.unit}</td>
+      <td class="bg-light text-end">${initialItem.unitPrice.toLocaleString()}</td>
+      <td class="bg-light text-end">${initialItem.amount.toLocaleString()}</td>
+      <td class="bg-light">${initialItem.remark}</td>
+      <td class="bg-light text-end">0</td>
+      <td class="bg-light text-end">0</td>
+      <td class="bg-light text-end fw-bold">${initialItem.costPrice.toLocaleString()}</td>
+      <td class="bg-light text-end fw-bold">${initialItem.costPrice.toLocaleString()}</td>
+      <td class="bg-light text-end">0%</td>
+      <td class="bg-light text-end">0%</td>
+      <td class="bg-light"></td><td class="bg-light"></td><td class="bg-light"></td>
+    `;
 
-      // 自動計算を実行して「登録」イベントを発火
-      updateAutoFields();
-      form.dispatchEvent(new Event("submit"));
+      if (targetRow) {
+        targetRow.innerHTML = rowHtml;
+        attachRowEvents(targetRow, 'b');
+      } else {
+        const emptyRow = tableBody.querySelector('td[colspan]');
+        if (emptyRow) tableBody.innerHTML = '';
 
-      // 最後に定価・備考などを強制的に空にする
-      const finalRow = editRow || tableBody.lastElementChild;
-      if (finalRow && finalRow.children.length >= 12) {
-        finalRow.classList.add("initial-data-row");
-        finalRow.children[8].textContent = "";
-        finalRow.children[9].textContent = "";
-        finalRow.children[10].textContent = "";
+        const newRow = document.createElement("tr");
+        newRow.classList.add("initial-data-row");
+        newRow.innerHTML = rowHtml;
+        // 常に先頭に挿入
+        if (tableBody.firstChild) tableBody.insertBefore(newRow, tableBody.firstChild);
+        else tableBody.appendChild(newRow);
+        attachRowEvents(newRow, 'b');
       }
-      form.reset();
-
-      // チェックボックスが入っていれば同期処理を実行
-      const bCheck = document.getElementById('bMaterialCheck');
-      if (bCheck && bCheck.checked) {
-        if (typeof window.syncMaterialTotals === 'function') window.syncMaterialTotals();
-        bCheck.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+      // 合計を再計算（これで上の金額欄に反映されます）
+      calculateTotals('b');
     };
 
-    // 起動時の初期投入
-    setTimeout(() => injectInitialData(false), 200);
+    setTimeout(() => injectInitialData(false), 500);
+    document.querySelectorAll('input[name="koujiType"]').forEach(r => r.addEventListener('change', () => injectInitialData(true)));
 
-    // 工事種類が切り替わったら再計算
-    document.querySelectorAll('input[name="koujiType"]').forEach(radio => {
-      radio.addEventListener('change', () => injectInitialData(true));
-    });
-
-    // 小計(input)の監視
-    const laborSubtotalEl = document.getElementById('laborSubtotal');
-    if (laborSubtotalEl) {
-      // 直接入力やイベント検知
-      laborSubtotalEl.addEventListener('input', () => injectInitialData(true));
-      laborSubtotalEl.addEventListener('change', () => injectInitialData(true));
-
-      // スクリプトによる自動書き換えを定期チェック（0.5秒おき）
-      let lastValue = laborSubtotalEl.value;
+    if (document.getElementById('laborSubtotal')) {
+      let lastVal = "";
       setInterval(() => {
-        if (laborSubtotalEl.value !== lastValue) {
-          lastValue = laborSubtotalEl.value;
+        const currentVal = document.getElementById('laborSubtotal').value;
+        if (currentVal !== lastVal) {
+          lastVal = currentVal;
           injectInitialData(true);
         }
-      }, 500);
+      }, 1000);
     }
   }
+}
+
+/**
+ * ★ A材の一括更新処理：登録済みデータを現在の係数で再計算
+ */
+function updateAllAItemsByCoefficient() {
+  const tableBody = document.getElementById('a-itemTableBody');
+  const coeffInput = document.getElementById('a-sell-coefficient');
+  const desc = document.getElementById('coeff-description');
+  if (!tableBody || !coeffInput) return;
+
+  const newCoeff = parseFloat(coeffInput.value) || 1.3;
+
+  if (desc) {
+    let bonusText = (newCoeff === 1.0) ? "原価と同額" : (newCoeff > 1.0 ? `${Math.round((newCoeff - 1) * 10)}割増し` : "減額設定");
+    desc.textContent = `${bonusText} (100円単位切り上げ)`;
+  }
+
+  const rows = tableBody.querySelectorAll('tr');
+  rows.forEach(row => {
+    if (row.cells.length < 18 || row.querySelector('td[colspan]')) return;
+
+    const costPrice = parseFloat(row.cells[11].textContent.replace(/,/g, '')) || 0;
+    const quantity = parseFloat(row.cells[4].textContent) || 0;
+    const listPrice = parseFloat(row.cells[9].textContent.replace(/,/g, '')) || 0;
+
+    if (costPrice > 0) {
+      const newUnitPrice = Math.ceil((costPrice * newCoeff) / 100) * 100;
+      row.cells[6].textContent = newUnitPrice.toLocaleString();
+      row.cells[7].textContent = (newUnitPrice * quantity).toLocaleString();
+      if (listPrice > 0) {
+        row.cells[14].textContent = ((newUnitPrice / listPrice) * 100).toFixed(2) + "%";
+      }
+    }
+  });
+
+  // A材の合計表示を更新
+  let tAmount = 0, tList = 0, tCost = 0;
+  rows.forEach(r => {
+    if (r.cells.length < 18) return;
+    tAmount += parseFloat(r.cells[7].textContent.replace(/[^0-9.-]+/g, "")) || 0;
+    tList += parseFloat(r.cells[10].textContent.replace(/[^0-9.-]+/g, "")) || 0;
+    tCost += parseFloat(r.cells[12].textContent.replace(/[^0-9.-]+/g, "")) || 0;
+  });
+
+  const amtEl = document.getElementById(`a-totalAmount`);
+  if (amtEl) amtEl.textContent = `¥${tAmount.toLocaleString()}`;
+  const costEl = document.getElementById(`a-totalCostPrice`);
+  if (costEl) costEl.textContent = `¥${tCost.toLocaleString()}`;
+  const profitEl = document.getElementById(`a-totalProfit`);
+  if (profitEl) profitEl.textContent = `¥${(tAmount - tCost).toLocaleString()}`;
 }

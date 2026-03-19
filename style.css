@@ -241,19 +241,36 @@ body.modal-open {
     table-layout: fixed !important;
     width: 1400px !important;
     min-width: 1400px !important;
-    border-collapse: collapse !important;
+    border-collapse: separate !important;
+    border-spacing: 0;
+
+    /* 重要：テーブル自体の外枠を完全に消して、セルの線と重ならないようにする */
     border: none !important;
 }
 
-/* 2. 1列目（ラベル列）の幅を 150px に固定 */
+/* 2. 1列目（ラベル列）のデザイン維持と固定 */
 .custom-table th:first-child,
 .attendance-table .head-col {
     width: 150px !important;
     min-width: 150px !important;
     max-width: 150px !important;
     background-color: #e9ecef !important;
-    border: 1px solid #dee2e6 !important;
     font-size: 0.85rem;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+
+    /* 修正ポイント：左側の線(border-left)を明示して、内側の線と同じ色にする */
+    border-left: 1px solid #dee2e6 !important;
+    border-right: 1px solid #dee2e6 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+/* ついでに、ヘッダーの最上段も線が重ならないよう調整 */
+.custom-table thead th,
+.attendance-table thead th {
+    border-top: 1px solid #dee2e6 !important;
 }
 
 /* 3. データ列の幅を 125px に固定 */
@@ -413,6 +430,90 @@ body.modal-open {
 .initial-data-row td {
     background-color: transparent !important;
     /* 行の背景色を透過させて表示 */
+}
+
+/* 1. 親コンテナ：入りきらない時はボタンを下に逃がす */
+.text-end.mb-3.d-flex.justify-content-end {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    /* 収まらない時は2段にする */
+    justify-content: flex-end !important;
+    gap: 12px;
+    width: 100%;
+}
+
+/* 2. 白いカプセル部分：ここも「折り返し」を許可する */
+.text-end.mb-3 .rounded-pill.bg-white {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    /* ★重要：超拡大時はカプセル内で折り返す */
+    align-items: center !important;
+    justify-content: center !important;
+    /* 折り返した時も中央に */
+
+    height: auto !important;
+    /* 高さを自動に（2行対応） */
+    border-radius: 20px !important;
+    /* 2行になった時不自然なので丸みを調整 */
+    padding: 8px 15px !important;
+
+    margin-left: auto;
+    max-width: 100%;
+    /* 画面幅を絶対超えない */
+    flex-shrink: 1 !important;
+}
+
+/* 3. カプセル内の「入値 × 1.3倍」のセット */
+.text-end.mb-3 .rounded-pill.bg-white .d-flex {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    /* ★ここも折り返しを許可 */
+    justify-content: center !important;
+    gap: 8px !important;
+    min-width: 0;
+}
+
+/* 4. 各パーツ：重なりを防止しつつ、1つ1つが画面内に留まるようにする */
+.text-end.mb-3 .rounded-pill.bg-white span,
+.text-end.mb-3 .rounded-pill.bg-white small,
+.text-end.mb-3 .rounded-pill.bg-white i,
+.text-end.mb-3 .rounded-pill.bg-white .badge {
+    white-space: normal !important;
+    /* 改行を許可（単語が長すぎる場合） */
+    flex-shrink: 0 !important;
+    /* 文字そのものは縮ませない（重なり防止） */
+}
+
+/* 5. 入力欄 */
+.text-end.mb-3 .rounded-pill.bg-white input {
+    width: 50px !important;
+    flex-shrink: 0 !important;
+}
+
+/* オン：既存のクラス（少し整理しました） */
+.badge-outline-blue {
+    background-color: #fff !important;
+    border: 1.5px solid #0d6efd !important;
+    color: #0d6efd !important;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* オフ：新しく追加するクラス */
+.badge-outline-gray {
+    background-color: #f8f9fa !important;
+    /* 若干背景をグレーにすると「停止感」が出ます */
+    border: 1.5px solid #6c757d !important;
+    /* Bootstrap標準のグレー */
+    color: #6c757d !important;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    /* 少し薄くして「無効」を強調 */
 }
 
 /* ==========================================================================
