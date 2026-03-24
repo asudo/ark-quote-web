@@ -24,28 +24,41 @@ function setupMaterialForm(prefix) {
 
   let editRow = null;
 
-  // --- 次のNoを動的に計算するヘルパー ---
+  // 🔹 モーダルが閉じられた時に状態を完全にクリアする
+  modalElement.addEventListener('hidden.bs.modal', function () {
+    editRow = null; // 編集状態をクリア
+    form.reset();   // 入力値をリセット
+    const modalTitle = modalElement.querySelector(".modal-title");
+    if (modalTitle) modalTitle.textContent = "入力"; // タイトルを初期化
+  });
+
+  // --- 🔹 テーブルのNoを上から順に振り直すヘルパー ---
+  function renumberRows() {
+    const rows = tableBody.querySelectorAll("tr:not(:has(td[colspan]))");
+    rows.forEach((row, index) => {
+  
+      row.cells[1].textContent = index + 1;
+    });
+  }
+
+  // --- 🔹 次のNoを計算（新規入力用） ---
   function getNextNumber() {
     const rows = tableBody.querySelectorAll("tr:not(:has(td[colspan]))");
-    let maxNo = 1; // 自動生成が1を使うため、最低1からスタート
-    rows.forEach(row => {
-      const no = parseInt(row.cells[1]?.textContent);
-      if (!isNaN(no) && no > maxNo) maxNo = no;
-    });
-    return maxNo + 1;
+    // A材は1から、B材は自動生成があれば2から、なければ1から
+    return rows.length + 1;
   }
 
   // --- 0. モーダル起動時の初期化設定（新規入力ボタン） ---
   const addButtons = document.querySelectorAll(`[data-bs-target="#${prefix}-inputModal"]`);
   addButtons.forEach(btn => {
     btn.addEventListener("click", () => {
-      editRow = null; // 編集ターゲットをクリア
-      form.reset();   // モーダルの入力欄をすべて空にする
+      editRow = null;
+      form.reset();
 
-      // モーダルのタイトルとボタンを「新規」用の表示に戻す
       const modalTitle = modalElement.querySelector(".modal-title");
       const submitBtn = form.querySelector('button[type="submit"]');
 
+      // 🔹 常に「現在の行数 + 1」を計算して表示
       const nextNo = getNextNumber();
       if (modalTitle) modalTitle.textContent = `新規入力：${prefix.toUpperCase()}材 (No.${nextNo})`;
       if (submitBtn) submitBtn.textContent = "登録完了";
@@ -112,6 +125,7 @@ function setupMaterialForm(prefix) {
       <td>${data.company}</td>
     `;
 
+    // --- 1. 登録・更新処理の最後の方 ---
     if (editRow) {
       // 編集モード
       editRow.innerHTML = rowHtml;
@@ -128,7 +142,7 @@ function setupMaterialForm(prefix) {
       attachRowEvents(newRow, prefix);
     }
 
-    // 表の下にある合計欄を再計算
+    renumberRows(); // 🔹 ここで番号を綺麗に振り直す
     calculateTotals(prefix);
 
     // モーダルを閉じる
@@ -145,6 +159,10 @@ function setupMaterialForm(prefix) {
       editBtn.addEventListener("click", () => {
         editRow = row;
         const cells = row.children;
+        // 🔹 追加：編集時はその行の「現在のNo」をタイトルに表示する
+        const currentNo = cells[1].textContent;
+        const modalTitle = modalElement.querySelector(".modal-title");
+        if (modalTitle) modalTitle.textContent = `編集：${prefix.toUpperCase()}材 (No.${currentNo})`;
         document.getElementById(`${prefix}-modal-name`).value = cells[2].textContent;
         document.getElementById(`${prefix}-modal-spec`).value = cells[3].textContent;
         document.getElementById(`${prefix}-modal-quantity`).value = cells[4].textContent;
@@ -168,6 +186,7 @@ function setupMaterialForm(prefix) {
       deleteBtn.addEventListener("click", () => {
         if (confirm("本当に削除しますか？")) {
           row.remove();
+          renumberRows(); // 🔹 削除された後も番号を詰め直す
           calculateTotals(prefix);
         }
       });

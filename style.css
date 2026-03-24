@@ -389,11 +389,9 @@ body.modal-open {
     flex: 1;
     border: none !important;
     background: transparent !important;
-    /* 親のグレー背景を透過 */
     outline: none !important;
     box-shadow: none !important;
     padding: 0 8px !important;
-    /* padding: 4pxの代わり */
     font-size: 14px;
     height: 100%;
     margin: 0;
@@ -411,12 +409,11 @@ body.modal-open {
     text-align: left !important;
 }
 
-/* 真ん中の仕切り線（がっつり上下いっぱいに引く） */
+/* 真ん中の仕切り線 */
 .split-border-line {
     width: 1px;
     height: 100%;
     background-color: #ced4da;
-    /* 既存のborder色と統一 */
     z-index: 2;
     flex-shrink: 0;
 }
@@ -436,30 +433,23 @@ body.modal-open {
 .text-end.mb-3.d-flex.justify-content-end {
     display: flex !important;
     flex-wrap: wrap !important;
-    /* 収まらない時は2段にする */
     justify-content: flex-end !important;
     gap: 12px;
     width: 100%;
 }
 
-/* 2. 白いカプセル部分：ここも「折り返し」を許可する */
+/* 2. 白いカプセル部分 */
 .text-end.mb-3 .rounded-pill.bg-white {
     display: flex !important;
     flex-wrap: wrap !important;
-    /* ★重要：超拡大時はカプセル内で折り返す */
     align-items: center !important;
     justify-content: center !important;
-    /* 折り返した時も中央に */
-
     height: auto !important;
-    /* 高さを自動に（2行対応） */
     border-radius: 20px !important;
-    /* 2行になった時不自然なので丸みを調整 */
     padding: 8px 15px !important;
 
     margin-left: auto;
     max-width: 100%;
-    /* 画面幅を絶対超えない */
     flex-shrink: 1 !important;
 }
 
@@ -467,7 +457,6 @@ body.modal-open {
 .text-end.mb-3 .rounded-pill.bg-white .d-flex {
     display: flex !important;
     flex-wrap: wrap !important;
-    /* ★ここも折り返しを許可 */
     justify-content: center !important;
     gap: 8px !important;
     min-width: 0;
@@ -490,7 +479,7 @@ body.modal-open {
     flex-shrink: 0 !important;
 }
 
-/* オン：既存のクラス（少し整理しました） */
+/* オン：既存のクラス */
 .badge-outline-blue {
     background-color: #fff !important;
     border: 1.5px solid #0d6efd !important;
@@ -504,16 +493,13 @@ body.modal-open {
 /* オフ：新しく追加するクラス */
 .badge-outline-gray {
     background-color: #f8f9fa !important;
-    /* 若干背景をグレーにすると「停止感」が出ます */
     border: 1.5px solid #6c757d !important;
-    /* Bootstrap標準のグレー */
     color: #6c757d !important;
     font-weight: bold;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     opacity: 0.6;
-    /* 少し薄くして「無効」を強調 */
 }
 
 /* ==========================================================================
@@ -551,4 +537,147 @@ body.modal-open {
 /* その他パーツ */
 #totalCostRate {
     min-width: 100px;
+}
+
+/* ==========================================================================
+   5. 台数一覧 専用
+   ========================================================================== */
+/* スクロールバー設定 */
+#bulkScrollArea::-webkit-scrollbar {
+    display: none;
+}
+
+#interScrollArea::-webkit-scrollbar {
+    width: 10px;
+}
+
+#interScrollArea::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#interScrollArea::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 5px;
+}
+
+/* 枠線と高さの一致 */
+#bulkEditTable td,
+#intermediateTableBody td {
+    border: 1px solid #dee2e6 !important;
+    height: 38px !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+}
+
+/* 右側（中間確認）の余白調整★ */
+#intermediateTableBody td:first-child {
+    padding-left: 12px !important;
+    text-align: left;
+}
+
+#intermediateTableBody td:last-child {
+    padding-right: 15px !important;
+    text-align: right;
+}
+
+/* 🔹 擬似結合：上の行と同じ値なら透明にする */
+.duplicate-value {
+    color: transparent !important;
+}
+
+/* フォーカス時や、その行をマウスオーバーした時は見えるようにする */
+.duplicate-value:focus,
+tr:hover .duplicate-value {
+    color: #212529 !important;
+}
+
+/* 削除ボタン */
+.btn-delete-row {
+    color: #ced4da;
+    background: none;
+    border: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-delete-row:hover {
+    color: #dc3545;
+    background-color: #fff5f5;
+}
+
+/* 無効行 */
+.row-disabled {
+    background-color: #f8f9fa !important;
+    color: #adb5bd !important;
+}
+
+/* タイトルバーの高さを統一 */
+.custom-header-bar {
+    height: 42px !important;
+    box-sizing: border-box !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* 中の文字も確実に中央へ */
+.custom-header-bar h6 {
+    line-height: 42px !important;
+    display: flex;
+    align-items: center;
+}
+
+/* テーブルのフッターを下に固定する設定 */
+#daisu-list tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    outline: 1px solid #dee2e6;
+}
+
+/* スクロールエリアの微調整（フッター分を考慮） */
+#bulkScrollArea,
+#interScrollArea {
+    overflow-anchor: none;
+}
+
+/* ヘッダーの固定と透け防止 */
+#daisu-list #bulkEditTable thead th,
+#daisu-list #intermediateTable thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    background-color: #e9ecef !important;
+    opacity: 1 !important;
+    border-top: 1px solid #dee2e6 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+/* チェックを外した時の行デザイン */
+.row-disabled {
+    background-color: #f8f9fa !important;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+/* チェックボックス以外のinputだけを入力不可・打ち消し線にする */
+.row-disabled input:not(.row-reflect-check) {
+    color: #2f4160 !important;
+    text-decoration: line-through;
+    pointer-events: none;
+}
+
+/* チェックボックス自体は常に操作可能にする */
+.row-disabled .row-reflect-check {
+    pointer-events: auto !important;
+}
+
+/* プレビューの除外行 */
+#intermediateTableBody tr.row-disabled td {
+    background-color: #f8f9fa !important;
+    color: #2f4160 !important;
+    text-align: center;
 }

@@ -20,6 +20,10 @@
     <!-- タブメニュー -->
     <ul class="nav nav-tabs" id="materialTab" role="tablist">
       <li class="nav-item" role="presentation">
+        <button class="nav-link" id="daisu-tab" data-bs-toggle="tab" data-bs-target="#daisu-list" type="button"
+          role="tab" aria-controls="daisu-list" aria-selected="false">台数一覧</button>
+      </li>
+      <li class="nav-item" role="presentation">
         <button class="nav-link active" id="form1-tab" data-bs-toggle="tab" data-bs-target="#form1" type="button"
           role="tab" aria-controls="form1" aria-selected="true">見積web</button>
       </li>
@@ -39,6 +43,126 @@
 
     <!-- タブの中身 -->
     <div class="tab-content mt-4" id="materialTabContent">
+
+      <!-- 🔹 daisuの内容（台数一覧） -->
+      <div class="tab-pane fade" id="daisu-list" role="tabpanel" aria-labelledby="daisu-tab">
+        <div class="p-3 bg-white border border-top-0 shadow-sm rounded-bottom">
+
+          <div class="row g-0">
+            <div class="col-lg-8 border-end border-top border-start">
+              <div class="p-2 bg-light-subtle border-bottom d-flex align-items-center custom-header-bar"
+                style="height: 40px;">
+                <h6 class="fw-bold mb-0 small"><i class="fa-solid fa-pen-to-square me-1"></i> 1. 項目クイック入力（下書き）</h6>
+              </div>
+
+              <div class="table-responsive" id="bulkScrollArea"
+                style="max-height: 400px; overflow-y: scroll; scrollbar-width: none; -ms-overflow-style: none;">
+                <table class="table table-sm table-bordered mb-0" id="bulkEditTable">
+                  <thead class="table-light sticky-top text-center small align-middle" style="z-index: 10;">
+                    <tr style="height: 45px;">
+                      <th style="width: 40px;">選</th>
+                      <th style="width: 50px;">階</th>
+                      <th style="width: 120px;">場所</th>
+                      <th style="width: 100px;">種類</th>
+                      <th style="width: 65px;">数量</th>
+                      <th style="width: 100px;">形</th>
+                      <th>メモ・サイズ</th>
+                      <th style="width: 40px;">消</th>
+                    </tr>
+                  </thead>
+
+                  <tbody id="bulkTableBody">
+                  </tbody>
+
+                  <tfoot class="table-light fw-bold small sticky-bottom"
+                    style="z-index: 10; bottom: 0; background-color: white;">
+                    <tr>
+                      <td colspan="4" class="text-end bg-white">入力合計：</td>
+                      <td class="text-center bg-warning-subtle text-dark" id="bulkTotalQty" style="font-size: 1.1em;">0
+                      </td>
+                      <td colspan="3" class="bg-white"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="p-2 bg-light-subtle border-top border-bottom">
+                <button type="button" class="btn btn-secondary btn-sm" id="addBulkRowBtn">
+                  <i class="fa-solid fa-plus me-1"></i> 行を追加
+                </button>
+              </div>
+            </div>
+
+            <div class="col-lg-4 border-top border-end">
+              <div class="p-2 bg-light-subtle border-bottom d-flex align-items-center custom-header-bar"
+                style="height: 40px;">
+                <h6 class="fw-bold text-secondary mb-0 small"><i class="fa-solid fa-magnifying-glass me-1"></i> 2.
+                  自動集計プレビュー</h6>
+              </div>
+
+              <div class="table-responsive" id="interScrollArea" style="max-height: 400px; overflow-y: scroll;">
+                <table class="table table-sm table-bordered mb-0" id="intermediateTable">
+                  <thead class="table-light sticky-top text-center small align-middle" style="z-index: 10;">
+                    <tr style="height: 45px;">
+                      <th>合体名</th>
+                      <th style="width: 70px;">数量</th>
+                    </tr>
+                  </thead>
+
+                  <tbody id="intermediateTableBody" class="small text-muted">
+                  </tbody>
+
+                  <tfoot class="table-light fw-bold small sticky-bottom"
+                    style="z-index: 10; bottom: 0; background-color: white;">
+                    <tr>
+                      <td class="text-end bg-white">集計合計：</td>
+                      <td class="text-center bg-warning-subtle text-dark" id="interTotalQty" style="font-size: 1.1em;">0
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="p-2 bg-light-subtle border-top border-bottom" style="height: 47px;"></div>
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 bg-light rounded border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold text-primary mb-0"><i class="fa-solid fa-calculator me-1"></i> 3. 施工内容反映用データ</h6>
+              <button type="button" class="btn btn-primary" id="reflectToMainBtn">
+                <i class="fa-solid fa-paper-plane me-1"></i> 施工内容へ反映
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered bg-white align-middle mb-0">
+                <thead class="table-dark text-center small">
+                  <tr>
+                    <th style="width: 50px;">反映</th>
+                    <th>種類統計（合体名）</th>
+                    <th>選定機種（型番）</th>
+                    <th style="width: 80px;">合計数量</th>
+                    <th style="width: 120px;">単価</th>
+                  </tr>
+                </thead>
+                <tbody id="summaryTableBody">
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-3">現場メモを入力すると集計されます</td>
+                  </tr>
+                </tbody>
+                <tfoot class="table-secondary fw-bold">
+                  <tr>
+                    <td colspan="3" class="text-end">反映対象の総数量：</td>
+                    <td class="text-center bg-warning-subtle" id="summaryTotalQty" style="font-size: 1.1em;">0</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
       <!-- 🔹 form1の内容（見積） -->
       <div class="tab-pane fade show active" id="form1" role="tabpanel" aria-labelledby="form1-tab">
@@ -880,7 +1004,11 @@
                   </td>
                 </tr>
                 <tr class="bg-orange-row">
-                  <th class="table-secondary">交通費</th>
+                  <th class="table-secondary">交通費込
+                    <i class="fa fa-question-circle question-icon" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="アーク従業員のみ交通費は人数が1名以上の場合、一律5,000円で自動入力されます。実費が異なる場合は直接上書き入力してください。">
+                    </i>
+                  </th>
                   <td><input type="number" class="form-control form-control-sm text-end bg-transparent calc-trigger"
                       value="0"></td>
                   <td><input type="number" class="form-control form-control-sm text-end bg-transparent calc-trigger"
@@ -1781,6 +1909,7 @@
   <script src="main_form1.js"></script>
   <script src="main_form2.js"></script>
   <script src="main_form3.js"></script>
+  <script src="daisu-list.js"></script>
 </body>
 
 </html>

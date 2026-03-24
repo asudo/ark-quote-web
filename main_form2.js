@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const modalTitle = document.querySelector('#constructionModal .modal-title');
   const constructionForm = document.getElementById('constructionForm');
   const itemNameInput = document.getElementById('itemNameInput');
-  const itemNameSelect = itemNameInput; 
-  const itemNameOptions = document.getElementById('itemNameOptions'); 
+  const itemNameSelect = itemNameInput;
+  const itemNameOptions = document.getElementById('itemNameOptions');
   const contentInput = document.getElementById('contentInput') || document.querySelector('[name="content"]');
   const basePriceInput = document.getElementById('basePrice') || document.querySelector('input[name="basePrice"]');
   const finalUnitPriceInput = document.querySelector('.totalConfirmedPrice') || document.getElementById('finalUnitPrice');
@@ -1177,16 +1177,26 @@ document.addEventListener('DOMContentLoaded', function () {
       const countText = targetTd.textContent.replace(/[^0-9]/g, '');
       const totalDays = parseInt(countText) || 0;
 
-      // 自社スタッフ（index < 5）の交通費自動入力ロジック
+      // --- 交通費のロジック修正 ---
       if (index < 5) {
         const transportInput = transportRow?.querySelectorAll('input')[index];
         if (transportInput) {
-          transportInput.value = (totalDays > 0) ? 5000 : 0;
+          // 手入力（is-manualクラス）がない場合のみ自動入力
+          if (!transportInput.classList.contains('is-manual')) {
+            transportInput.value = (totalDays > 0) ? 5000 : 0;
+          }
+
+          // もし人数が0になったら、手入力フラグを解除してリセット
+          if (totalDays === 0) {
+            transportInput.classList.remove('is-manual');
+            transportInput.value = 0;
+          }
         }
       }
 
       const getVal = (row) => {
         const input = row?.querySelectorAll('input')[index];
+        // toLocaleStringなどのカンマを除去して数値化
         return parseInt(input?.value.replace(/[^0-9]/g, '') || "0");
       };
 
@@ -1196,29 +1206,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
       let finalTotal = 0;
 
-      // 人数が1人以上の時だけ計算を実行する
       if (totalDays > 0) {
         if (index < 5) {
-          // 自社：単価 × 人数
+          // 自社：単価 × 人数（自社も交通費などを含めるならここを調整）
           finalTotal = unitPrice * totalDays;
         } else {
           // 外注：(単価 × 人数) + 交通費 + 宿泊費
           finalTotal = (unitPrice * totalDays) + transport + stay;
         }
       } else {
-        // 人数が0人の時は、交通費などが入っていても合計は0にする
         finalTotal = 0;
       }
 
       const totalInput = totalRow?.querySelectorAll('input')[index];
       if (totalInput) {
-        // 合計を表示（0の場合は空文字にしたい場合はここを調整してください。今回は0を表示します）
         totalInput.value = finalTotal > 0 ? finalTotal.toLocaleString() : "0";
       }
     });
 
     updateUnitPriceSection();
   }
+
+  // --- 手入力を検知するためのイベントリスナーを追加 ---
+  document.querySelectorAll('.bg-orange-row:nth-of-type(3) input').forEach(input => {
+    input.addEventListener('input', (e) => {
+      // ユーザーが直接入力したら「is-manual」クラスを付与
+      e.target.classList.add('is-manual');
+    });
+  });
 
   // --- 1. スクロール同期 ---
   const scrollTop = document.getElementById('scroll-top');
