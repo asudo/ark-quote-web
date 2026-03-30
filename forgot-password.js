@@ -1,11 +1,16 @@
-// forgot-password.js
+/**
+ * forgot-password.js
+ * 役割：パスワードを忘れたユーザーへの【再設定メール送信】制御
+ * 主な処理：Supabase Authを利用したリセットメールのトリガー、送信状態のUI表示
+ */
+
 const _supabase = window.supabaseClient;
 const forgotForm = document.getElementById('forgotForm');
 const errorMessage = document.getElementById('errorMessage');
 
 forgotForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const email = document.getElementById('email').value.trim();
     const submitBtn = forgotForm.querySelector('.login-btn');
 
@@ -17,7 +22,7 @@ forgotForm.addEventListener('submit', async (e) => {
     // 状態を「処理中」に
     submitBtn.disabled = true;
     submitBtn.textContent = '送信中...';
-    
+
     try {
         /**
          * 【重要修正】GitHub Pagesのリポジトリ名を含めたフルURLを指定します
@@ -54,7 +59,7 @@ function showStatus(msg, type) {
     errorMessage.innerHTML = msg;
     errorMessage.classList.add('active');
     errorMessage.style.display = 'block';
-    
+
     if (type === "success") {
         errorMessage.style.color = "#28a745"; // 緑色
         errorMessage.style.backgroundColor = "#e8f5e9";

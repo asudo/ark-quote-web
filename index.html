@@ -16,7 +16,127 @@
 </head>
 
 <body>
+  <!-- タブメニュー -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm custom-header-border">
+    <div class="container-fluid px-2 px-md-4">
+      <div class="d-flex align-items-center me-2">
+        <div class="brand-icon-box me-2">
+          <i class="fa-solid fa-file-invoice-dollar text-white"></i>
+        </div>
+        <span class="fw-bold text-dark text-nowrap">見積Web <small
+            class="text-primary fw-normal ms-1">System</small></span>
+      </div>
+
+      <div class="ms-auto d-flex align-items-center gap-1 gap-md-2 flex-nowrap">
+
+        <button type="button" class="btn btn-sm btn-save-temp px-2 px-md-3 d-flex align-items-center text-nowrap"
+          id="btn-save-temp">
+          <i class="fa-regular fa-floppy-disk me-md-1"></i>
+          <span class="d-none d-sm-inline">一時保存</span>
+        </button>
+
+        <button type="button"
+          class="btn btn-sm btn-primary btn-complete px-2 px-md-3 fw-bold d-flex align-items-center text-nowrap"
+          id="btn-complete">
+          <i class="fa-solid fa-check me-md-1"></i>
+          <span class="d-none d-sm-inline">見積完了</span>
+        </button>
+
+        <div class="vr mx-1 mx-md-2 text-black-50" style="height: 20px;"></div>
+
+        <div class="dropdown">
+          <button class="btn btn-menu-custom dropdown-toggle" type="button" id="userMenuButton"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-circle-user me-1 text-primary"></i>
+            <span id="loginUserName" class="d-none d-md-inline">メニュー</span>
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userMenuButton"
+            style="max-height: 80vh; overflow-y: auto;">
+            <li>
+              <h6 class="dropdown-header text-uppercase small">システム操作</h6>
+            </li>
+            <li><a class="dropdown-item py-2" href="menu.html"><i
+                  class="fa-solid fa-house me-2 text-secondary"></i>メインメニュー</a></li>
+            <li><a class="dropdown-item py-2" href="#"><i
+                  class="fa-solid fa-clock-history me-2 text-secondary"></i>見積履歴（準備中）</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <h6 class="dropdown-header text-uppercase small">アカウント</h6>
+            </li>
+            <li><a class="dropdown-item py-2" href="#"><i class="fa-solid fa-gear me-2 text-secondary"></i>設定</a></li>
+            <li>
+              <button class="dropdown-item py-2 text-danger logout-hover" id="logout-btn" onclick="handleLogout()">
+                <i class="fa-solid fa-right-from-bracket me-2"></i>ログアウト
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
   <div class="container my-4">
+
+    <div class="mb-3 px-1">
+      <div class="d-flex align-items-center mb-1">
+        <i class="fa-solid fa-folder text-primary me-2 opacity-75 small"></i>
+        <span class="text-muted small fw-bold text-uppercase"
+          style="letter-spacing: 0.15em; font-size: 0.75rem;">PROJECT TITLE</span>
+      </div>
+
+      <input type="text" id="projectNameInput"
+        class="form-control border-0 border-bottom rounded-0 px-0 fw-bold projectNameInput" placeholder="案件名を入力してください"
+        style="font-size: 1.5rem; background-color: transparent; border-color: #dee2e6 !important; transition: all 0.3s; padding-bottom: 2px;">
+
+      <div class="d-flex justify-content-between mt-1 align-items-center">
+        <span class="badge rounded-pill bg-light text-muted border py-1"
+          style="font-size: 0.7rem; letter-spacing: 0.05em;">
+          <i class="fa-solid fa-tag me-1 text-primary opacity-50"></i>
+          <span id="tagName">電気工事</span>
+        </span>
+        <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>最終更新: <span
+            id="lastUpdated">-</span></small>
+      </div>
+    </div>
+
+    <div class="modal fade" id="leaveConfirmModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+          <div class="modal-body text-center p-4">
+            <div class="mb-4">
+              <div class="display-4 text-warning">
+                <i class="fa fa-file-pen"></i>
+              </div>
+            </div>
+
+            <h5 class="fw-bold mb-2">変更を保存しますか？</h5>
+            <p class="text-muted small mb-4">
+              入力した見積データがまだ保存されていません。<br>
+              このまま移動すると内容が消えてしまいます。
+            </p>
+
+            <div class="d-grid gap-2">
+              <button type="button" class="btn btn-primary py-2 fw-bold" id="btn-save-and-leave"
+                style="border-radius: 12px;">
+                保存して移動する
+              </button>
+              <button type="button" class="btn btn-light py-2 text-danger fw-bold" id="btn-leave-anyway"
+                style="border-radius: 12px; background-color: #fff5f5;">
+                保存せずに移動
+              </button>
+              <button type="button" class="btn btn-link text-muted small mt-2" data-bs-dismiss="modal"
+                style="text-decoration: none;">
+                キャンセルして編集を続ける
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- タブメニュー -->
     <ul class="nav nav-tabs" id="materialTab" role="tablist">
       <li class="nav-item" role="presentation">
@@ -147,7 +267,7 @@
                 </thead>
                 <tbody id="summaryTableBody">
                   <tr>
-                    <td colspan="5" class="text-center text-muted py-3">現場メモを入力すると集計されます</td>
+                    <td colspan="5" class="text-center text-muted py-3">項目クイック入力に追加すると集計されます</td>
                   </tr>
                 </tbody>
                 <tfoot class="table-secondary fw-bold">
@@ -166,289 +286,288 @@
 
       <!-- 🔹 form1の内容（見積） -->
       <div class="tab-pane fade show active" id="form1" role="tabpanel" aria-labelledby="form1-tab">
-        <h1 class="text-center mb-4">見積web</h1>
-        <p class="text-center text-muted small">
-          すべての項目を入力してください。
-        </p>
+        <div class="container pt-5">
+          <h2 class="text-center mb-4">見積web</h2>
+          <p class="text-center text-muted small">
+            すべての項目を入力してください。
+          </p>
 
-        <form>
-          <!-- 基本情報 -->
-          <fieldset class="mb-4">
-            <legend>基本情報</legend>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label for="companySelect" class="form-label required">作成会社</label>
-                <select id="companySelect" name="company" class="form-select" required>
-                  <option value="">選択してください</option>
-                  <option value="af">株式会社アークフォレスト</option>
-                  <option value="ak" selected>株式会社アーク空調設備</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label for="creatorSelect" class="form-label required">作成者</label>
-                <select id="creatorSelect" class="form-select" required>
-                  <option value="">読み込み中...</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label for="destinationInput" class="form-label required">宛先</label>
-                <input type="text" id="destinationInput" name="destination" class="form-control" list="destinationList"
-                  placeholder="会社名を入力または選択" required>
-                <datalist id="destinationList">
-                </datalist>
-              </div>
+          <form>
+            <!-- 基本情報 -->
+            <fieldset class="mb-4">
+              <legend>基本情報</legend>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="companySelect" class="form-label required">作成会社</label>
+                  <select id="companySelect" name="company" class="form-select" required>
+                    <option value="">選択してください</option>
+                    <option value="af">株式会社アークフォレスト</option>
+                    <option value="ak" selected>株式会社アーク空調設備</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="creatorSelect" class="form-label required">作成者</label>
+                  <select id="creatorSelect" class="form-select" required>
+                    <option value="">読み込み中...</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="destinationInput" class="form-label required">宛先</label>
+                  <input type="text" id="destinationInput" name="destination" class="form-control"
+                    list="destinationList" placeholder="会社名を入力または選択" required>
+                  <datalist id="destinationList">
+                  </datalist>
+                </div>
 
-              <div class="col-md-6">
-                <label for="contactInput" class="form-label required">担当者</label>
-                <input type="text" id="contactInput" name="contact" class="form-control" list="contactOptions"
-                  placeholder="担当者名を入力または選択">
-                <datalist id="contactOptions">
-                </datalist>
+                <div class="col-md-6">
+                  <label for="contactInput" class="form-label required">担当者</label>
+                  <input type="text" id="contactInput" name="contact" class="form-control" list="contactOptions"
+                    placeholder="担当者名を入力または選択">
+                  <datalist id="contactOptions">
+                  </datalist>
+                </div>
               </div>
+            </fieldset>
+
+            <hr class="section-divider">
+
+            <fieldset class="mb-4">
+              <legend>見積番号</legend>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="limitDate" class="form-label">見積期限日</label>
+                  <input type="date" class="form-control" id="limitDate" name="limitDate" readonly>
+                  <p class="text-note">※ 見積日から3か月後に自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo" class="form-label">見積番号</label>
+                  <input type="text" class="form-control" id="estimateNo" name="estimateNo" readonly>
+                  <p class="text-note">※ 見積番号①～⑥に応じて自動入力されます。枝番が入力されている場合、見積番号の末尾に自動で追加されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo1" class="form-label">見積番号①</label>
+                  <input type="text" class="form-control" id="estimateNo1" name="estimateNo1" readonly>
+                  <p class="text-note">※ 作成会社に応じて自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo2" class="form-label">見積番号②</label>
+                  <input type="text" class="form-control" id="estimateNo2" name="estimateNo2" readonly>
+                  <p class="text-note">※ 宛先に応じて自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo3" class="form-label">見積番号③</label>
+                  <input type="text" class="form-control" id="estimateNo3" name="estimateNo3" readonly>
+                  <p class="text-note">※ 見積日(YYYY/MM/DD)に応じて自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo4" class="form-label">見積番号④</label>
+                  <input type="text" class="form-control" id="estimateNo4" name="estimateNo4" readonly>
+                  <p class="text-note">※ 見積月に応じて連番が自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo5" class="form-label">見積番号⑤</label>
+                  <input type="text" class="form-control" id="estimateNo5" name="estimateNo5" readonly>
+                  <p class="text-note">※ 作成者に応じて自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo6" class="form-label">見積番号⑥</label>
+                  <input type="text" id="estimateNo6" name="estimateNo6" class="form-control" readonly>
+                  <p class="text-note">※ 宛先と担当者に応じて自動入力されます。</p>
+                </div>
+                <div class="col-md-4">
+                  <label for="estimateNo7" class="form-label">枝番⑦</label>
+                  <input type="text" class="form-control" id="estimateNo7" name="estimateNo7" readonly>
+                  <p class="text-note">※ 保存・修正時に自動入力されます。</p>
+                </div>
+              </div>
+            </fieldset>
+
+            <hr class="section-divider">
+
+            <!-- 工事情報 -->
+            <fieldset class="mb-4">
+              <legend>工事情報</legend>
+              <div class="row g-3">
+                <div class="col-12 mb-2">
+                  <label class="form-label required d-block">工事種類</label>
+                  <div class="d-flex gap-4">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" id="koujiType1" name="koujiType" value="電気工事" checked
+                        required>
+                      <label class="form-check-label" for="koujiType1">電気工事</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" id="koujiType2" name="koujiType" value="空調工事">
+                      <label class="form-check-label" for="koujiType2">空調工事</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="workCompany" class="form-label required">会社名</label>
+                  <input type="text" class="form-control" id="workCompany" name="workCompany" placeholder="株式会社○○○"
+                    required>
+                </div>
+                <div class="col-md-6">
+                  <label for="workAddress" class="form-label required">住所</label>
+                  <input type="text" class="form-control" id="workAddress" name="workAddress" placeholder="東京都大田区△△△△"
+                    required>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="estimateDate" class="form-label required">見積日</label>
+                  <input type="date" class="form-control" id="estimateDate" name="estimateDate" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">概要</label>
+                  <div class="mt-1">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" id="summary1" name="summary" value="migencho">
+                      <label class="form-check-label" for="summary1">概算・未現調</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input" type="radio" id="summary2" name="summary" value="gaisan">
+                      <label class="form-check-label" for="summary2">概算</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="workContent" class="form-label">内容</label>
+                  <input type="text" class="form-control" id="workContent" name="workContent" required readonly>
+                  <p class="text-note mb-0">※ 工事種類に応じて自動入力されます。</p>
+                </div>
+                <div class="col-md-6">
+                  <label for="workDetail" class="form-label">詳細</label>
+                  <input type="text" class="form-control" id="workDetail" name="workDetail">
+                </div>
+
+                <div class="col-md-4">
+                  <label for="workTypeSelect" class="form-label">工事連日・単発</label>
+                  <select id="workTypeSelect" name="workType" class="form-select">
+                    <option value="">選択してください</option>
+                    <option value="renjitsu">単発</option>
+                    <option value="tanpatsu">連日</option>
+                    <option value="doniti">土日連日</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label for="startDate" class="form-label">工事開始日</label>
+                  <input type="date" class="form-control" id="startDate" name="startDate">
+                </div>
+                <div class="col-md-4">
+                  <label for="deliveryDate" class="form-label">納品日</label>
+                  <input type="date" class="form-control" id="deliveryDate" name="deliveryDate">
+                </div>
+
+                <div class="col-md-6">
+                  <label for="distanceSelect" class="form-label">距離</label>
+                  <select id="distanceSelect" name="distance" class="form-select">
+                    <option value="">選択してください</option>
+                    <option value="Long">遠距離</option>
+                    <option value="Medium ">中距離</option>
+                    <option value="Short">近距離</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="environmentSelect" class="form-label">環境</label>
+                  <select id="environmentSelect" name="environment" class="form-select">
+                    <option value="">選択してください</option>
+                    <option value="office">事務所</option>
+                    <option value="store">店舗</option>
+                    <option value="factory">工場</option>
+                    <option value="warehouse">倉庫</option>
+                    <option value="other">その他</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">産業廃棄物</label>
+                  <div class="d-flex gap-3 mt-1">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="sanpaiStatus" id="sanpai_none" value="なし"
+                        checked>
+                      <label class="form-check-label" for="sanpai_none">なし</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="sanpaiStatus" id="sanpai_exists" value="あり">
+                      <label class="form-check-label" for="sanpai_exists">あり</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">マニフェスト</label>
+                  <div class="d-flex gap-3 mt-1">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="manifestoStatus" id="manifesto_none" value="不要"
+                        checked disabled>
+                      <label class="form-check-label" for="manifesto_none">不要</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="manifestoStatus" id="manifesto_exists"
+                        value="必要" disabled>
+                      <label class="form-check-label" for="manifesto_exists">必要</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <hr style="border-top: 2px dashed #969696; margin: 10px 0;">
+                </div>
+
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center gap-2 mt-2">
+                    <label class="form-label mb-0" for="processSheet" style="width: 5.5em;">行程管理票</label>
+                    <input class="form-check-input" type="checkbox" id="processSheet" name="processSheet">
+                  </div>
+                </div>
+                <div class="col-md-6"></div>
+
+                <div class="col-12">
+                  <hr style="border-top: 2px dashed #969696; margin: 10px 0;">
+                </div>
+
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <label class="form-label mb-0" for="yearEnd" style="width: 5.5em;">年末年始</label>
+                    <input class="form-check-input" type="checkbox" id="yearEnd" name="yearEnd">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center gap-2 mt-1">
+                    <label class="form-label mb-0" for="fiscalEnd" style="width: 5.5em;">年度末</label>
+                    <input class="form-check-input" type="checkbox" id="fiscalEnd" name="fiscalEnd">
+                  </div>
+                </div>
+
+              </div>
+            </fieldset>
+
+            <hr class="section-divider">
+
+            <div class="text-center mt-4 mb-4">
+              <button type="button" id="btnToForm2" class="btn btn-warning">
+                施工内容の入力へ進む
+              </button>
             </div>
-          </fieldset>
-
-          <hr class="section-divider">
-
-          <fieldset class="mb-4">
-            <legend>見積番号</legend>
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label for="limitDate" class="form-label">見積期限日</label>
-                <input type="date" class="form-control" id="limitDate" name="limitDate" readonly>
-                <p class="text-note">※ 見積日から3か月後に自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo" class="form-label">見積番号</label>
-                <input type="text" class="form-control" id="estimateNo" name="estimateNo" readonly>
-                <p class="text-note">※ 見積番号①～⑥に応じて自動入力されます。枝番が入力されている場合、見積番号の末尾に自動で追加されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo1" class="form-label">見積番号①</label>
-                <input type="text" class="form-control" id="estimateNo1" name="estimateNo1" readonly>
-                <p class="text-note">※ 作成会社に応じて自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo2" class="form-label">見積番号②</label>
-                <input type="text" class="form-control" id="estimateNo2" name="estimateNo2" readonly>
-                <p class="text-note">※ 宛先に応じて自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo3" class="form-label">見積番号③</label>
-                <input type="text" class="form-control" id="estimateNo3" name="estimateNo3" readonly>
-                <p class="text-note">※ 見積日(YYYY/MM/DD)に応じて自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo4" class="form-label">見積番号④</label>
-                <input type="text" class="form-control" id="estimateNo4" name="estimateNo4" readonly>
-                <p class="text-note">※ 見積月に応じて連番が自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo5" class="form-label">見積番号⑤</label>
-                <input type="text" class="form-control" id="estimateNo5" name="estimateNo5" readonly>
-                <p class="text-note">※ 作成者に応じて自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo6" class="form-label">見積番号⑥</label>
-                <input type="text" id="estimateNo6" name="estimateNo6" class="form-control" readonly>
-                <p class="text-note">※ 宛先と担当者に応じて自動入力されます。</p>
-              </div>
-              <div class="col-md-4">
-                <label for="estimateNo7" class="form-label">枝番⑦</label>
-                <input type="text" class="form-control" id="estimateNo7" name="estimateNo7" readonly>
-                <p class="text-note">※ 保存・修正時に自動入力されます。</p>
-              </div>
-            </div>
-          </fieldset>
-
-          <hr class="section-divider">
-
-          <!-- 工事情報 -->
-          <fieldset class="mb-4">
-            <legend>工事情報</legend>
-            <div class="row g-3">
-              <div class="col-12 mb-2">
-                <label class="form-label required d-block">工事種類</label>
-                <div class="d-flex gap-4">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" id="koujiType1" name="koujiType" value="電気工事" checked
-                      required>
-                    <label class="form-check-label" for="koujiType1">電気工事</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" id="koujiType2" name="koujiType" value="空調工事">
-                    <label class="form-check-label" for="koujiType2">空調工事</label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label for="workCompany" class="form-label required">会社名</label>
-                <input type="text" class="form-control" id="workCompany" name="workCompany" placeholder="株式会社○○○"
-                  required>
-              </div>
-              <div class="col-md-6">
-                <label for="workAddress" class="form-label required">住所</label>
-                <input type="text" class="form-control" id="workAddress" name="workAddress" placeholder="東京都大田区△△△△"
-                  required>
-              </div>
-
-              <div class="col-md-6">
-                <label for="estimateDate" class="form-label required">見積日</label>
-                <input type="date" class="form-control" id="estimateDate" name="estimateDate" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">概要</label>
-                <div class="mt-1">
-                  <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" id="summary1" name="summary" value="migencho">
-                    <label class="form-check-label" for="summary1">概算・未現調</label>
-                  </div>
-                  <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" id="summary2" name="summary" value="gaisan">
-                    <label class="form-check-label" for="summary2">概算</label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label for="workContent" class="form-label">内容</label>
-                <input type="text" class="form-control" id="workContent" name="workContent" required readonly>
-                <p class="text-note mb-0">※ 工事種類に応じて自動入力されます。</p>
-              </div>
-              <div class="col-md-6">
-                <label for="workDetail" class="form-label">詳細</label>
-                <input type="text" class="form-control" id="workDetail" name="workDetail">
-              </div>
-
-              <div class="col-md-4">
-                <label for="workTypeSelect" class="form-label">工事連日・単発</label>
-                <select id="workTypeSelect" name="workType" class="form-select">
-                  <option value="">選択してください</option>
-                  <option value="renjitsu">単発</option>
-                  <option value="tanpatsu">連日</option>
-                  <option value="doniti">土日連日</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label for="startDate" class="form-label">工事開始日</label>
-                <input type="date" class="form-control" id="startDate" name="startDate">
-              </div>
-              <div class="col-md-4">
-                <label for="deliveryDate" class="form-label">納品日</label>
-                <input type="date" class="form-control" id="deliveryDate" name="deliveryDate">
-              </div>
-
-              <div class="col-md-6">
-                <label for="distanceSelect" class="form-label">距離</label>
-                <select id="distanceSelect" name="distance" class="form-select">
-                  <option value="">選択してください</option>
-                  <option value="Long">遠距離</option>
-                  <option value="Medium ">中距離</option>
-                  <option value="Short">近距離</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label for="environmentSelect" class="form-label">環境</label>
-                <select id="environmentSelect" name="environment" class="form-select">
-                  <option value="">選択してください</option>
-                  <option value="office">事務所</option>
-                  <option value="store">店舗</option>
-                  <option value="factory">工場</option>
-                  <option value="warehouse">倉庫</option>
-                  <option value="other">その他</option>
-                </select>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">産業廃棄物</label>
-                <div class="d-flex gap-3 mt-1">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="sanpaiStatus" id="sanpai_none" value="なし"
-                      checked>
-                    <label class="form-check-label" for="sanpai_none">なし</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="sanpaiStatus" id="sanpai_exists" value="あり">
-                    <label class="form-check-label" for="sanpai_exists">あり</label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">マニフェスト</label>
-                <div class="d-flex gap-3 mt-1">
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="manifestoStatus" id="manifesto_none" value="不要"
-                      checked disabled>
-                    <label class="form-check-label" for="manifesto_none">不要</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="radio" name="manifestoStatus" id="manifesto_exists" value="必要"
-                      disabled>
-                    <label class="form-check-label" for="manifesto_exists">必要</label>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12">
-                <hr style="border-top: 2px dashed #969696; margin: 10px 0;">
-              </div>
-
-              <div class="col-md-6">
-                <div class="d-flex align-items-center gap-2 mt-2">
-                  <label class="form-label mb-0" for="processSheet" style="width: 5.5em;">行程管理票</label>
-                  <input class="form-check-input" type="checkbox" id="processSheet" name="processSheet">
-                </div>
-              </div>
-              <div class="col-md-6"></div>
-
-              <div class="col-12">
-                <hr style="border-top: 2px dashed #969696; margin: 10px 0;">
-              </div>
-
-              <div class="col-md-6">
-                <div class="d-flex align-items-center gap-2 mt-1">
-                  <label class="form-label mb-0" for="yearEnd" style="width: 5.5em;">年末年始</label>
-                  <input class="form-check-input" type="checkbox" id="yearEnd" name="yearEnd">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="d-flex align-items-center gap-2 mt-1">
-                  <label class="form-label mb-0" for="fiscalEnd" style="width: 5.5em;">年度末</label>
-                  <input class="form-check-input" type="checkbox" id="fiscalEnd" name="fiscalEnd">
-                </div>
-              </div>
-
-            </div>
-          </fieldset>
-
-          <hr class="section-divider">
-
-          <div class="text-center mt-4 mb-4">
-            <button type="button" id="btnToForm2" class="btn btn-warning">
-              施工内容の入力へ進む
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
 
       <!-- 🔹 form2の内容（施工内容） -->
       <div class="tab-pane fade" id="form2" role="tabpanel" aria-labelledby="form2-tab">
-        <div class="container py-4">
-          <div class="container">
-            <!-- タイトル -->
-            <div class="text-center mb-4">
-              <h2>施工内容（予算書）</h2>
-              <div class="mb-3 d-flex align-items-center flex-wrap gap-3 form-container">
-                <div class="input-wrapper">
-                  <label for="addressee" class="form-label mb-0">宛先</label>
-                  <input type="text" id="addressee" class="form-control" placeholder="例：株式会社〇〇〇 御中">
-                </div>
-                <div class="input-wrapper">
-                  <label for="companyName" class="form-label mb-0">会社名</label>
-                  <input type="text" id="companyName" class="form-control" placeholder="例：株式会社〇〇〇">
-                </div>
+        <div class="container pt-5">
+          <div class="text-center mb-4">
+            <h2>施工内容（予算書）</h2>
+            <div class="mb-3 d-flex align-items-center flex-wrap gap-3 form-container justify-content-center">
+              <div class="input-wrapper">
+                <label for="addressee" class="form-label mb-0">宛先</label>
+                <input type="text" id="addressee" class="form-control" placeholder="例：株式会社〇〇〇 御中">
+              </div>
+              <div class="input-wrapper">
+                <label for="companyName" class="form-label mb-0">会社名</label>
+                <input type="text" id="companyName" class="form-control" placeholder="例：株式会社〇〇〇">
               </div>
             </div>
           </div>
@@ -1910,6 +2029,7 @@
   <script src="main_form2.js"></script>
   <script src="main_form3.js"></script>
   <script src="daisu-list.js"></script>
+  <script src="save_logic.js"></script>
 </body>
 
 </html>

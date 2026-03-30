@@ -1,6 +1,10 @@
-// login.js
-const _supabase = window.supabaseClient;
+/**
+ * login.js
+ * 役割：ユーザーの【ログイン認証】とセッション管理
+ * 主な処理：メールアドレス/パスワードによる認証、エラーハンドリング、トップページへの遷移
+ */
 
+const _supabase = window.supabaseClient;
 const loginForm = document.getElementById('loginForm');
 const errorMessage = document.getElementById('errorMessage');
 const emailInput = document.getElementById('userId');

@@ -1,4 +1,9 @@
-// signup.js
+/**
+ * signup.js
+ * 役割：新規ユーザーの【アカウント作成（仮登録）】制御
+ * 主な処理：社内ドメイン制限、イニシャルの自動整形、パスワードの一致確認、Supabase Authへの登録実行
+ */
+
 const _supabase = window.supabaseClient;
 
 const signupForm = document.getElementById('signupForm');

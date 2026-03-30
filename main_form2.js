@@ -1,3 +1,12 @@
+/**
+ * main_form2.js
+ * 役割：【施工内容・原価・利益計算】の統合メインロジック
+ * 主な処理：施工項目の入力と単価・割増率のリアルタイム計算、出勤簿と連動した人工費・諸経費の集計、
+ * 3軸（全体・工事・商品）での利益率分析、工期に応じた施工目標数と日付の自動連鎖制御。
+ */
+
+window.isSurveyFeeManual = false; // 現調費の手動修正フラグ
+
 document.addEventListener('DOMContentLoaded', function () {
 
   // ==========================================================================
@@ -5,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // ==========================================================================
   let masterData = [];             // Supabaseから取得したマスタ
   let editingRow = null;           // 編集中の行
-  let isSurveyFeeManual = false;   // 現調費の手動修正フラグ
   let lastProfitSettings = {       // 割増設定の引き継ぎ用
     check_day: false, check_night: false, check_high: false,
     check_special: false, check_waste: false, check_adjust: false
@@ -91,6 +99,280 @@ document.addEventListener('DOMContentLoaded', function () {
   const constructionTableBody = document.querySelector('.construction-scroll tbody');
   const btnToForm2 = document.getElementById('btnToForm2');
   const form2TabEl = document.getElementById('form2-tab');
+
+  /**
+ * 🔹 施工内容タブの復元用関数
+ * save_logic.js から呼び出されます
+ */
+  window.restoreMainForm2Data = function (data) {
+    if (!data) return;
+    console.log("施工内容タブの復元を開始します", data);
+
+    // 💡 0. 単価グループ（手入力フラグと金額）の最優先復元
+    if (data.unitPriceInfo) {
+      if (data.unitPriceInfo.isSurveyFeeManual !== undefined) {
+        window.isSurveyFeeManual = data.unitPriceInfo.isSurveyFeeManual;
+      }
+      const havc = document.getElementById('highAltitudeVehicleCost');
+      if (havc) havc.value = data.unitPriceInfo.highAltitudeVehicleCost || "￥0";
+
+      const sf = document.getElementById('surveyFee');
+      if (sf) sf.value = data.unitPriceInfo.surveyFee || "0";
+    }
+
+    // 1. 基本入力項目の復元
+    const fields = {
+      'addressee': data.addressee,
+      'companyName': data.companyName,
+      'ceilingHeight1': data.ceilingHeight1,
+      'ceilingHeight2': data.ceilingHeight2,
+      'budgetDiscount': data.budgetDiscount,
+      'rate_day': data.rate_day,
+      'rate_night': data.rate_night,
+      'rate_high': data.rate_high,
+      'rate_special': data.rate_special,
+      'rate_waste': data.rate_waste
+    };
+
+    for (const [id, value] of Object.entries(fields)) {
+      const el = document.getElementById(id);
+      if (el) el.value = value || (id.includes('rate') ? "0" : "");
+    }
+
+    // 2. 高所作業車の「全体チェック」復元
+    const hwCheck = document.getElementById('highWorkCar');
+    if (hwCheck) {
+      hwCheck.checked = data.hasHighWorkCar === true;
+      if (typeof highWorkSection !== 'undefined' && highWorkSection) {
+        highWorkSection.classList.toggle('d-none', !hwCheck.checked);
+      }
+    }
+
+    // 3. 高所作業車テーブルの明細行復元
+    if (data.highWorkTable && Array.isArray(data.highWorkTable)) {
+      const tableBody = document.querySelector('#highWorkSection tbody');
+      if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        data.highWorkTable.forEach((rowData, index) => {
+          if (rows[index]) {
+            const inputs = rows[index].querySelectorAll('input');
+            if (inputs.length >= 9) {
+              inputs[0].checked = rowData.selected;
+              inputs[1].value = rowData.qty;
+              inputs[2].value = rowData.unit;
+              inputs[3].value = rowData.price;
+              inputs[4].value = rowData.transport;
+              inputs[5].value = rowData.totalPrice;
+              inputs[6].value = rowData.subtotal;
+              inputs[7].value = rowData.memo1;
+              inputs[8].value = rowData.memo2;
+            }
+          }
+        });
+      }
+    }
+
+    // 4. メインテーブル（施工内容）の行復元
+    const cBody = document.getElementById('constructionTableBody');
+    if (cBody && data.constructionTable && Array.isArray(data.constructionTable)) {
+      cBody.innerHTML = '';
+      data.constructionTable.forEach(rowData => {
+        if (rowData.itemName === "駐車場代") return;
+        // すぐ下で定義している関数を呼び出す
+        const newRow = window.createConstructionRow(rowData);
+        cBody.appendChild(newRow);
+      });
+    }
+
+    // 5. 駐車場代の復元
+    const pkCheck = document.getElementById('parkingCheck');
+    if (pkCheck) {
+      pkCheck.checked = !!data.isParkingAdded;
+      if (pkCheck.checked) {
+        pkCheck.dispatchEvent(new Event('change'));
+        setTimeout(() => {
+          const pRow = document.querySelector('tr[data-item-name="駐車場代"]');
+          if (pRow) {
+            const qtyInp = pRow.querySelector('.parking-qty-input');
+            const priceInp = pRow.querySelector('.parking-direct-input');
+            if (qtyInp && data.parkingQty) qtyInp.value = data.parkingQty;
+            if (priceInp && data.parkingPrice) priceInp.value = data.parkingPrice;
+            qtyInp.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }, 150);
+      }
+    }
+
+    // 6. 全体の再計算と同期
+    if (typeof updateTableNumbers === "function") updateTableNumbers();
+    if (typeof syncHeaderCheckboxes === "function") syncHeaderCheckboxes();
+    if (typeof updateAllDisplays === 'function') updateAllDisplays();
+
+    // --- 🔹 A. アーク外注表（スタッフ氏名・単価等）の復元 ---
+    console.log("スタッフ詳細情報の復元を開始します", data.staffList);
+
+    if (data.staffList && Array.isArray(data.staffList)) {
+      const scrollTopTable = document.getElementById('scroll-top');
+      if (scrollTopTable) {
+        // 各入力要素のリストを取得
+        const nameInputs = scrollTopTable.querySelectorAll('thead tr:nth-child(2) input'); // 氏名
+        const typeInputs = scrollTopTable.querySelectorAll('tbody tr:nth-child(1) input'); // 種類
+        const priceInputs = scrollTopTable.querySelectorAll('tbody tr.row-unit-price input'); // 単価
+        const transportInputs = scrollTopTable.querySelectorAll('tbody tr:nth-child(3) input'); // 交通費
+        const stayInputs = scrollTopTable.querySelectorAll('tbody tr:nth-child(4) input'); // 宿泊費
+
+        data.staffList.forEach((staff, i) => {
+          if (nameInputs[i]) nameInputs[i].value = staff.name || "";
+          if (typeInputs[i]) typeInputs[i].value = staff.type || "";
+          if (priceInputs[i]) priceInputs[i].value = staff.unitPrice || "0";
+          if (transportInputs[i]) transportInputs[i].value = staff.transport || "0";
+          if (stayInputs[i]) stayInputs[i].value = staff.stay || "0";
+        });
+      }
+    }
+
+    // 7. 出勤簿・スケジュールの復元
+    console.log("出勤簿・スケジュールの復元を開始します");
+
+    // --- 出勤管理（〇印）の復元 ---
+    if (data.attendanceTable && Array.isArray(data.attendanceTable)) {
+      const attendanceRows = document.querySelectorAll('#attendance-body .attendance-row');
+      data.attendanceTable.forEach((rowData, rowIndex) => {
+        if (attendanceRows[rowIndex]) {
+          const cells = attendanceRows[rowIndex].querySelectorAll('.attendance-cell');
+          rowData.forEach((isMarked, cellIndex) => {
+            const cell = cells[cellIndex];
+            if (cell) {
+              if (isMarked) {
+                cell.textContent = '〇';
+                cell.style.backgroundColor = "rgb(231, 241, 255)";
+                cell.style.color = "rgb(13, 110, 253)";
+                cell.style.fontWeight = "bold";
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // [2] 下の表の「日付」を復元する
+    if (data.targetTable && Array.isArray(data.targetTable)) {
+      const targetTbody = document.getElementById('target-schedule-body');
+      if (targetTbody) {
+        // 先に目標表の行が生成されていることを確認するために updateAttendanceCounts を一度呼ぶ
+        if (typeof updateAttendanceCounts === 'function') updateAttendanceCounts();
+
+        const rows = targetTbody.querySelectorAll('tr');
+        data.targetTable.forEach((rowData, index) => {
+          if (rows[index]) {
+            const dateInput = rows[index].querySelector('.target-date-input');
+            if (dateInput) {
+              dateInput.value = rowData.date || "";
+            }
+          }
+        });
+      }
+    }
+
+    // --- 🔹 全ての復元が終わった後に、最終的な再計算を強制する 🔹 ---
+    // ブラウザの描画と数値の反映を待つため、少し長めの待機時間を設けます
+    setTimeout(() => {
+      console.log("最終集計を開始します...");
+
+      // 1. 【最重要】施工テーブルから「総数（台数）」を正しく拾い直す
+      if (typeof updateTotalQuantity === 'function') {
+        updateTotalQuantity();
+      }
+
+      // 2. 工事日数（〇印の数）と下の表の「人数表示」を確定させる
+      if (typeof updateAttendanceCounts === 'function') {
+        updateAttendanceCounts();
+      }
+
+      // 3. 上記1と2で確定した「正しい総数」と「正しい日数」を使って目標値を計算する
+      if (typeof calculateTargets === 'function') {
+        console.log("確定した数値で目標値を再計算します");
+        calculateTargets();
+      }
+
+      // 4. 利益率や全体の金額表示を最終同期
+      if (typeof updateAllDisplays === 'function') {
+        updateAllDisplays();
+      }
+      if (typeof calculateLaborCosts === 'function') {
+        calculateLaborCosts();
+      }
+
+      console.log("施工内容タブの全復元が完了しました");
+    }, 300); // 300ミリ秒待機して確実に数値を読み込ませる
+
+  };
+
+  /**
+   * 💡 保存データ(rowData)から施工内容テーブルの行(tr)を物理的に生成する関数
+   */
+  window.createConstructionRow = function (rowData) {
+    const isKeisuChecked = rowData.keisu === 'on';
+    const getV = (val) => (val === undefined || val === null) ? "" : val;
+
+    if (rowData.checks) {
+      lastProfitSettings = {
+        check_day: !!rowData.checks.day,
+        check_night: !!rowData.checks.night,
+        check_high: !!rowData.checks.high,
+        check_special: !!rowData.checks.special,
+        check_waste: !!rowData.checks.waste,
+        check_adjust: !!rowData.adjustment && rowData.adjustment !== 0
+      };
+    }
+
+    const tr = document.createElement('tr');
+
+    // 計算は行わず、保存されている数値をそのまま <td> に反映
+    tr.innerHTML = `
+    <td>
+      <div class="d-flex justify-content-center gap-1">
+        <button type="button" class="editBtn btn btn-sm btn-outline-primary">編集</button>
+        <button type="button" class="deleteBtn btn btn-sm btn-outline-danger">削除</button>
+      </div>
+    </td>
+    <td></td> <td>${getV(rowData.itemName)}</td>
+    <td>${getV(rowData.touyo)}</td>
+    <td class="text-end">${getV(rowData.qty)}</td>
+    <td>${getV(rowData.unit)}</td>
+    <td>${getV(rowData.content)}</td>
+    <td class="text-end">${getV(rowData.honsu)}</td>
+    <td class="text-end base-price-cell">${getV(rowData.basePrice)}</td>
+    <td class="text-end profit-cell">${getV(rowData.checks?.day ? Math.round(rowData.basePrice * (parseFloat(document.getElementById('rate_day')?.value) || 0)) : 0)}</td>
+    <td class="text-end profit-cell">${getV(rowData.checks?.night ? Math.round(rowData.basePrice * (parseFloat(document.getElementById('rate_night')?.value) || 0)) : 0)}</td>
+    <td class="text-end profit-cell">${getV(rowData.checks?.high ? Math.round(rowData.basePrice * (parseFloat(document.getElementById('rate_high')?.value) || 0)) : 0)}</td>
+    <td class="text-end profit-cell">${getV(rowData.checks?.special ? Math.round(rowData.basePrice * (parseFloat(document.getElementById('rate_special')?.value) || 0)) : 0)}</td>
+    <td class="text-end profit-cell">${getV(rowData.checks?.waste ? Math.round(rowData.basePrice * (parseFloat(document.getElementById('rate_waste')?.value) || 0)) : 0)}</td>
+    <td class="text-end profit-cell">${getV(rowData.adjustment)}</td>
+    <td class="text-end fw-bold final-unit-price-cell">${getV(rowData.finalPrice)}</td>
+    <td class="text-end fw-bold subtotal-cell">${getV(rowData.subtotal)}</td>
+    <td class="text-center">
+      <select class="form-select form-select-sm keisu-dropdown">
+        <option value="on" ${isKeisuChecked ? 'selected' : ''}>〇</option>
+        <option value="off" ${!isKeisuChecked ? 'selected' : ''}>✕</option>
+      </select>
+    </td>
+  `;
+
+    // 係数OFF(✕)時のスタイル調整
+    if (!isKeisuChecked) {
+      tr.style.backgroundColor = "#f2f2f2";
+      tr.style.color = "#999";
+      for (let i = 9; i <= 13; i++) {
+        if (tr.cells[i]) tr.cells[i].style.opacity = "0.5";
+      }
+    }
+
+    // 編集・削除などのボタンイベントを紐付け
+    if (typeof assignRowEvents === "function") assignRowEvents(tr);
+
+    return tr;
+  };
 
   // ==========================================================================
   // ★ マスターデータ
@@ -330,6 +612,24 @@ document.addEventListener('DOMContentLoaded', function () {
   profitCheckIds.forEach(id => {
     document.getElementById(id)?.addEventListener('change', function () {
       calculateModalProfits();
+    });
+  });
+
+  openModalBtn?.addEventListener('click', function () {
+    editingRow = null; // 編集モード解除
+    if (constructionForm) constructionForm.reset(); // フォームリセット
+    if (modalTitle) modalTitle.textContent = '新規入力:施工内容';
+    if (registerBtn) registerBtn.textContent = "登録";
+
+    // 保存されている直前の設定（高所など）をモーダルに自動反映
+    profitCheckIds.forEach(id => {
+      const chk = document.getElementById(id);
+      if (chk) {
+        // lastProfitSettingsから前回の値を復元（true or false）
+        chk.checked = !!lastProfitSettings[id];
+        // 設定が変わったことを通知して、金額計算(calculateModalProfits)を走らせる
+        chk.dispatchEvent(new Event('change'));
+      }
     });
   });
 
@@ -1576,13 +1876,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- 現調費の自動判定（表示のみ更新し、最終合計には加算しない） ---
     const surveyFeeInput = document.getElementById('surveyFee');
-    if (surveyFeeInput && !isSurveyFeeManual) {
+    if (surveyFeeInput && window.isSurveyFeeManual === false) {
       if (rawLabor > 0) {
-        // 労務費が5万円以下なら5,000円、それ以外は10,000円をセット
         surveyFeeInput.value = (rawLabor <= 50000) ? 5000 : 10000;
       } else {
         surveyFeeInput.value = 0;
       }
+    }
+
+    // 手入力されたらフラグを立てる
+    if (surveyFeeInput && !surveyFeeInput.dataset.listenerAdded) {
+      surveyFeeInput.addEventListener('input', () => {
+        window.isSurveyFeeManual = true; // 手入力モードに切り替え
+        console.log("現調費が手動入力されました。自動計算をオフにします。");
+      });
+      // 二重登録防止用のフラグ
+      surveyFeeInput.dataset.listenerAdded = "true";
     }
 
     // 労務費・諸経費の表示更新
@@ -1698,18 +2007,21 @@ document.addEventListener('DOMContentLoaded', function () {
   updateUnitPriceSection();
   updateItemNameOptions();
 
-  // --- ページ読み込み完了後に、各入力フィールドへのイベント設定（リアルタイム連動）を行う ---
-  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-  });
-
+  // --- ページ読み込み完了後に、各入力フィールドへのイベント設定 ---
   const surveyFeeInput = document.getElementById('surveyFee');
 
   [budgetDiscountInput, surveyFeeInput].forEach(input => {
     if (!input || input.type === 'date' || input.classList.contains('flatpickr-input')) return;
 
     let previousValue = "";
+
+    // 1.入力した瞬間に「手動フラグ」を立てる
+    input.addEventListener('input', function () {
+      if (this.id === 'surveyFee') {
+        window.isSurveyFeeManual = true;
+        console.log("現調費を手動ロックしました");
+      }
+    });
 
     input.addEventListener('focus', function () {
       previousValue = this.value;
@@ -1720,15 +2032,33 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     input.addEventListener('blur', function () {
+      // 2.値が変更されていたら手動フラグを確定させる
+      if (this.id === 'surveyFee' && this.value !== previousValue) {
+        window.isSurveyFeeManual = true;
+      }
+
+      // 未入力やマイナスのみの場合は前の値に戻す（既存ロジック維持）
       if (this.value.trim() === '' || this.value === '-') {
         this.value = previousValue;
       }
 
+      // それでも空なら0にする（既存ロジック維持）
       if (this.value.trim() === '') {
         this.value = '0';
       }
 
-      if (typeof updateAllDisplays === 'function') updateAllDisplays();
+      // 3. 全体再計算を呼び出す
+      // ここで updateAllDisplays が呼ばれますが、
+      // 手動フラグが true なので自動上書きはスルーされます。
+      if (typeof updateAllDisplays === 'function') {
+        updateAllDisplays();
+      }
     });
   });
+  // --- ツールチップを有効化する ---
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
 });

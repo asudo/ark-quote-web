@@ -1,4 +1,11 @@
+/**
+ * update-password.js
+ * 役割：再設定メールから遷移した後の【新しいパスワードの登録】処理
+ * 主な処理：新しいパスワードのバリデーション、Supabaseへの更新実行
+ */
+
 const _supabase = window.supabaseClient;
+
 const updateForm = document.getElementById('updateForm');
 const errorMessage = document.getElementById('errorMessage');
 const passwordInput = document.getElementById('new_pw');

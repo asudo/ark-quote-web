@@ -1,3 +1,13 @@
+/**
+ * main_form3.js 
+ * 役割：【A材（商品）・B材（消耗品）】の明細管理と自動計算
+ * 主な処理：モーダルによる材料明細の登録・編集、売価係数（利益率）に基づく一括再計算、
+ * B材の自動生成ロジック（工事種類連動）、および保存データの整合性を保った復元制御。
+ */
+
+// 復元処理中かどうかを判定するフラグ
+let isRestoring = false;
+
 document.addEventListener("DOMContentLoaded", () => {
   // A材(prefix: 'a')とB材(prefix: 'b')の各フォームを初期化
   setupMaterialForm('a');
@@ -33,10 +43,10 @@ function setupMaterialForm(prefix) {
   });
 
   // --- 🔹 テーブルのNoを上から順に振り直すヘルパー ---
-  function renumberRows() {
+  // 外から呼べるように公開
+  window[`renumberRows_${prefix}`] = function () {
     const rows = tableBody.querySelectorAll("tr:not(:has(td[colspan]))");
     rows.forEach((row, index) => {
-  
       row.cells[1].textContent = index + 1;
     });
   }
@@ -142,7 +152,7 @@ function setupMaterialForm(prefix) {
       attachRowEvents(newRow, prefix);
     }
 
-    renumberRows(); // 🔹 ここで番号を綺麗に振り直す
+    window[`renumberRows_${prefix}`](); // 🔹 ここで番号を綺麗に振り直す
     calculateTotals(prefix);
 
     // モーダルを閉じる
@@ -152,16 +162,19 @@ function setupMaterialForm(prefix) {
   });
 
   // --- 2. 編集・削除ボタンのイベント登録 ---
-  function attachRowEvents(row, prefix) {
+  // window.をつけて外から呼べるように定義
+  window.attachRowEvents = function (row, prefix) {
     // 編集ボタン：行のデータを取り出してモーダルにセット
     const editBtn = row.querySelector(".editBtn");
     if (editBtn) {
       editBtn.addEventListener("click", () => {
+        // 現在の prefix フォームの modalElement を参照
+        const targetModal = document.getElementById(`${prefix}-inputModal`);
         editRow = row;
         const cells = row.children;
         // 🔹 追加：編集時はその行の「現在のNo」をタイトルに表示する
         const currentNo = cells[1].textContent;
-        const modalTitle = modalElement.querySelector(".modal-title");
+        const modalTitle = targetModal.querySelector(".modal-title");
         if (modalTitle) modalTitle.textContent = `編集：${prefix.toUpperCase()}材 (No.${currentNo})`;
         document.getElementById(`${prefix}-modal-name`).value = cells[2].textContent;
         document.getElementById(`${prefix}-modal-spec`).value = cells[3].textContent;
@@ -175,7 +188,7 @@ function setupMaterialForm(prefix) {
         document.getElementById(`${prefix}-modal-actual`).value = cells[16].textContent;
         document.getElementById(`${prefix}-modal-company`).value = cells[17].textContent;
 
-        const modalInstance = new bootstrap.Modal(modalElement);
+        const modalInstance = new bootstrap.Modal(targetModal);
         modalInstance.show();
       });
     }
@@ -186,7 +199,7 @@ function setupMaterialForm(prefix) {
       deleteBtn.addEventListener("click", () => {
         if (confirm("本当に削除しますか？")) {
           row.remove();
-          renumberRows(); // 🔹 削除された後も番号を詰め直す
+          if (window[`renumberRows_${prefix}`]) window[`renumberRows_${prefix}`](); // 🔹 削除された後も番号を詰め直す
           calculateTotals(prefix);
         }
       });
@@ -194,13 +207,16 @@ function setupMaterialForm(prefix) {
   }
 
   // --- 3. 合計計算処理（テーブル全体の集計） ---
-  function calculateTotals(prefix) {
-    const rows = tableBody.querySelectorAll("tr");
+  // window.をつけて外から呼べるように定義
+  window.calculateTotals = function (prefix) {
+    const targetTableBody = document.getElementById(`${prefix}-itemTableBody`);
+    if (!targetTableBody) return;
+    const rows = targetTableBody.querySelectorAll("tr");
     let tAmount = 0, tList = 0, tCost = 0;
 
     rows.forEach(row => {
       const cells = row.children;
-      if (cells.length < 18) return;
+      if (cells.length < 18 || row.querySelector('td[colspan]')) return;
       tAmount += parseFloat(cells[7].textContent.replace(/[^0-9.-]+/g, "")) || 0;
       tList += parseFloat(cells[10].textContent.replace(/[^0-9.-]+/g, "")) || 0;
       tCost += parseFloat(cells[12].textContent.replace(/[^0-9.-]+/g, "")) || 0;
@@ -383,6 +399,9 @@ function setupMaterialForm(prefix) {
   // --- 6. B材限定：自動データ投入ロジック ---
   if (prefix === 'b') {
     const injectInitialData = (forceUpdate = false) => {
+      // ★ 復元中、または既にデータが存在する場合は自動生成をスキップ
+      if (isRestoring) return;
+
       const koujiEl = document.querySelector('input[name="koujiType"]:checked');
       if (!koujiEl) return;
       const selectedKouji = koujiEl.value;
@@ -514,18 +533,100 @@ function updateAllAItemsByCoefficient() {
   });
 
   // A材の合計表示を更新
-  let tAmount = 0, tList = 0, tCost = 0;
-  rows.forEach(r => {
-    if (r.cells.length < 18) return;
-    tAmount += parseFloat(r.cells[7].textContent.replace(/[^0-9.-]+/g, "")) || 0;
-    tList += parseFloat(r.cells[10].textContent.replace(/[^0-9.-]+/g, "")) || 0;
-    tCost += parseFloat(r.cells[12].textContent.replace(/[^0-9.-]+/g, "")) || 0;
+  if (window.calculateTotals) window.calculateTotals('a');
+}
+
+/**
+ * A材・B材 共通のデータ復元処理
+ * @param {string} prefix - 'a' または 'b'
+ * @param {Object} data - 保存されていたデータオブジェクト
+ */
+window.restoreMaterialData = function (prefix, data) {
+  if (!data) return;
+
+  // ★ 復元開始
+  isRestoring = true;
+
+  // 1. 基本設定の復元（チェックボックスと売価係数）
+  const checkEl = document.getElementById(`${prefix}MaterialCheck`);
+  if (checkEl) checkEl.checked = data.isAddedToBudget || false;
+
+  const coeffEl = document.getElementById(`${prefix}-sell-coefficient`);
+  if (coeffEl) {
+    coeffEl.value = data.sellCoefficient || "1.3";
+    // A材の場合はラベルの表示更新イベントを飛ばす
+    coeffEl.dispatchEvent(new Event('input'));
+  }
+
+  // 2. テーブルの復元
+  const tableBody = document.getElementById(`${prefix}-itemTableBody`);
+  if (!tableBody) return;
+  tableBody.innerHTML = ''; // 一旦クリア
+
+  if (!data.tableData || data.tableData.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="18" class="text-center">データ未入力</td></tr>';
+    return;
+  }
+
+  data.tableData.forEach((item, index) => {
+    const tr = document.createElement("tr");
+
+    // B材の「自動生成行」判定（remarkやクラスで判断）
+    const isAutoRow = (prefix === 'b' && item.remark === "自動生成");
+    if (isAutoRow) {
+      tr.classList.add("initial-data-row");
+    }
+
+    // 行のHTMLを組み立て（元のソースのrowHtml構造を忠実に再現）
+    tr.innerHTML = `
+            <td>
+                <div class="d-flex justify-content-center gap-1">
+                    ${isAutoRow ?
+        `<button type="button" class="btn btn-sm btn-secondary" style="pointer-events: none;">自動</button>` :
+        `<button type="button" class="editBtn btn btn-sm btn-outline-primary">編集</button>`
+      }
+                    <button type="button" class="deleteBtn btn btn-sm btn-outline-danger">削除</button>
+                </div>
+            </td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${index + 1}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.name || ""}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.spec || ""}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.qty || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.unit || ""}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.unitPrice || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.amount || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.remark || ""}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.listPrice || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.listTotal || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end fw-bold">${item.costPrice || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end fw-bold">${item.costTotal || "0"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.costRate || "0%"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''} text-end">${item.sellRate || "0%"}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.itemName || ""}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.actual || ""}</td>
+            <td class="${isAutoRow ? 'bg-light' : ''}">${item.company || ""}</td>
+        `;
+
+    tableBody.appendChild(tr);
+
+    // 編集・削除イベントを再紐付け（公開した関数を利用）
+    if (typeof window.attachRowEvents === 'function') {
+      window.attachRowEvents(tr, prefix);
+    }
   });
 
-  const amtEl = document.getElementById(`a-totalAmount`);
-  if (amtEl) amtEl.textContent = `¥${tAmount.toLocaleString()}`;
-  const costEl = document.getElementById(`a-totalCostPrice`);
-  if (costEl) costEl.textContent = `¥${tCost.toLocaleString()}`;
-  const profitEl = document.getElementById(`a-totalProfit`);
-  if (profitEl) profitEl.textContent = `¥${(tAmount - tCost).toLocaleString()}`;
-}
+  // 3. 全体計算の実行
+  if (typeof window.calculateTotals === 'function') {
+    window.calculateTotals(prefix);
+  }
+
+  // チェックボックスの連動を反映
+  const dummyEvent = new Event('change', { bubbles: true });
+  checkEl?.dispatchEvent(dummyEvent);
+
+  // 復元が終わったので、1秒後に自動計算ガードを解除する
+  setTimeout(() => {
+    isRestoring = false;
+    console.log(`${prefix}材の復元が完了しました（ガード解除）`);
+  }, 1000);
+};

@@ -159,6 +159,19 @@ body.modal-open {
     padding: 8px 4px;
 }
 
+/* プレースホルダーをより薄く、なじむ色に設定 */
+.projectNameInput::placeholder {
+    color: #b1b9c2;
+    opacity: 0.8;
+}
+
+/* フォーカス時の動作を定義（下線だけが青くなる上品な動き） */
+.projectNameInput:focus {
+    box-shadow: none;
+    border-color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, 0.01) !important;
+}
+
 /* 2段構造のヘッダー背景 */
 .table thead tr th[colspan] {
     background-color: #dee2e6 !important;
@@ -680,4 +693,86 @@ tr:hover .duplicate-value {
     background-color: #f8f9fa !important;
     color: #2f4160 !important;
     text-align: center;
+}
+
+
+/* ==========================================================================
+    作成済一覧・下書き用
+   ========================================================================== */
+
+/* --- ヘッダー全体の装飾 --- */
+.custom-header-border {
+    border-bottom: 2px solid #e9ecef !important;
+    /* 2枚目の青線を細くし、清潔感を強調 */
+}
+
+/* ロゴアイコン（ダッシュボードのアイコンに合わせる） */
+.brand-icon-box {
+    background-color: #007bff;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- ヘッダー内ボタンの共通設定 --- */
+.navbar .btn-sm {
+    height: 34px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+/* 一時保存ボタン */
+.btn-save-temp {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+}
+
+.btn-save-temp:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+/* 見積完了ボタン */
+.btn-complete {
+    background-color: #007bff;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.btn-complete:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+}
+
+/* メニューボタン（丸みを持たせた清潔感デザイン） */
+.btn-menu-custom {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    height: 34px;
+    display: flex;
+    align-items: center;
+}
+
+.btn-menu-custom:hover {
+    background-color: #e7f1ff;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+/* ドロップダウンのログアウトホバー */
+.logout-hover:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
 }
