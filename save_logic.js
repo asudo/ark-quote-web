@@ -9,19 +9,32 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("save_logic.js が正常に読み込まれました");
-
     // =============================================================
-    // 0. データの復元ロジック (URLにIDがある場合)
+    // 0. データの復元ロジック (URLにIDまたはcopy_fromがある場合)
     // =============================================================
     const urlParams = new URLSearchParams(window.location.search);
     const estimateId = urlParams.get('id');
+    const copyFromId = urlParams.get('copy_from');
+    const isCopying = !!copyFromId; // 🌟 コピー中かどうかのフラグ
+
+    // 🌟 【重要】まずマスタの読み込みを完了させ、反映まで少し待つ
+    if (typeof loadDatabaseMasters === 'function') {
+        await loadDatabaseMasters();
+        await new Promise(resolve => setTimeout(resolve, 300)); // DOM構築の猶予
+    }
 
     if (estimateId) {
         console.log("既存データの復元を開始します ID:", estimateId);
         await loadEstimateData(estimateId);
+    } else if (copyFromId) {
+        console.log("コピー元データからの復元を開始します ID:", copyFromId);
+        await loadEstimateData(copyFromId, true);
+    } else {
+        // 🌟 ここに追加！（新規作成時）
+        updateButtonDisplay(null, false);
     }
 
-    async function loadEstimateData(id) {
+    async function loadEstimateData(id, isCopy = false) {
         try {
             const { data, error } = await supabaseClient
                 .from('estimates')
@@ -30,11 +43,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .single();
 
             if (error) throw error;
-            if (!data) return;
+            if (!data || !data.content_data) return;
+
+            // --- 0. 共通項目（件名・日時）の表示 ---
+            const projectNameInput = document.getElementById('projectNameInput');
+            if (projectNameInput) projectNameInput.value = data.project_name || "";
 
             const lastUpdatedEl = document.getElementById('lastUpdated');
             if (lastUpdatedEl && data.updated_at) {
-                // Supabaseの updated_at は標準で入っているので、それを見やすく変換して表示
                 const date = new Date(data.updated_at);
                 lastUpdatedEl.textContent = date.toLocaleString('ja-JP', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
@@ -42,54 +58,87 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            // 1. 共通項目（件名）の復元
-            const projectNameInput = document.getElementById('projectNameInput');
-            if (projectNameInput) {
-                projectNameInput.value = data.project_name || "";
+            const content = data.content_data;
+            console.log("--- 復元フェーズ開始 ---");
+
+            // =============================================================
+            // STEP 1: 「計算・行生成」が発生するサブタブを先に復元
+            // =============================================================
+            // ※これらが完全に終わるのを await で待ちます
+
+            // A. 台数一覧
+            if (typeof window.restoreDaisuData === 'function') {
+                console.log("STEP 1-A: 台数一覧の復元");
+                await window.restoreDaisuData(content);
             }
 
-            // 2. content_data 内の各タブデータの復元
-            if (data.content_data) {
-                const content = data.content_data;
+            // B. 施工内容タブ (main_form2.js)
+            if (content.main_form2 && typeof window.restoreMainForm2Data === 'function') {
+                console.log("STEP 1-B: 施工内容の復元（計算待ち含む）");
+                await window.restoreMainForm2Data(content.main_form2);
 
-                // --- 🔹 A. 台数一覧 (daisu-list.js) の復元 ---
-                if (typeof window.restoreDaisuData === 'function') {
-                    console.log("台数一覧（型番・単価含む）の復元を実行します");
-                    // ⭕️ content (daisu_list と daisu_reflect の両方が入ったオブジェクト) を丸ごと渡す
-                    window.restoreDaisuData(content);
+                // 出勤簿などの行復元
+                if (content.main_form2.attendanceTable && typeof window.restoreAttendanceRows === 'function') {
+                    await window.restoreAttendanceRows(content.main_form2.attendanceTable, content.main_form2.targetTable);
                 }
+            }
 
-                // --- 🔹 B. 見積web/工事情報 (main_form1.js) の復元 ---
-                if (content.main_form1 && typeof window.restoreMainFormData === 'function') {
-                    console.log("見積webの復元を実行します");
-                    window.restoreMainFormData(content.main_form1);
+            // C. A材・B材
+            if (content.a_material && typeof window.restoreMaterialData === 'function') {
+                await window.restoreMaterialData('a', content.a_material);
+            }
+            if (content.b_material && typeof window.restoreMaterialData === 'function') {
+                await window.restoreMaterialData('b', content.b_material);
+            }
+
+            // 🌟 物理的な「計算待ち」時間を置く（重要：集計ロジックの衝突回避）
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // =============================================================
+            // STEP 2: 【最重要】見積web(基本情報)を最後に確定復元
+            // =============================================================
+            if (content.main_form1 && typeof window.restoreMainFormData === 'function') {
+                console.log("STEP 2: 見積web(基本情報)の最終書き込み");
+                const restoreData = {
+                    ...content.main_form1,
+                    estimate_no: data.estimate_no,
+                    serial_number: data.serial_number,
+                    revision_number: data.revision_number || content.main_form1.estimate_no7,
+                    status: data.status,
+                    project_name: data.project_name
+                };
+
+                // 他のタブの干渉を受けないよう最後に実行
+                await window.restoreMainFormData(restoreData);
+            }
+
+            // =============================================================
+            // STEP 3: コピー時専用の最終クリーンアップ
+            // =============================================================
+            if (isCopy) {
+                const estNo7 = document.getElementById('estimateNo7');
+                if (estNo7) {
+                    estNo7.value = "";
                 }
-                // --- 🔹 C. 施工内容タブ (main_form2.js) の復元 ---
-                if (content.main_form2 && typeof window.restoreMainForm2Data === 'function') {
-                    window.restoreMainForm2Data(content.main_form2);
+                if (lastUpdatedEl) lastUpdatedEl.textContent = "新規作成（コピー）";
 
-                    // 💡 ここに追記：出勤管理データの復元（もし main_form2.js 側でまとめてない場合）
-                    if (content.main_form2.attendanceTable && typeof window.restoreAttendanceRows === 'function') {
-                        window.restoreAttendanceRows(content.main_form2.attendanceTable, content.main_form2.targetTable);
+                // 最後に作成者だけ、他のJSに上書きされないようダメ押しでセット
+                setTimeout(() => {
+                    if (content.main_form1.creator_name) {
+                        const el = document.getElementById('creatorSelect');
+                        if (el) el.value = content.main_form1.creator_name;
                     }
-                }
-
-                // A材の復元
-                if (content.a_material) {
-                    window.restoreMaterialData('a', content.a_material);
-                }
-
-                // B材の復元
-                if (content.b_material) {
-                    window.restoreMaterialData('b', content.b_material);
-                }
-
-                console.log("全データの復元処理が完了しました");
+                    if (typeof updateFullEstimateNo === 'function') updateFullEstimateNo();
+                    console.log("コピー工程がすべて完了しました");
+                }, 200);
+            } else {
+                console.log("復元工程がすべて完了しました");
             }
+            updateButtonDisplay(data.status, isCopy)
 
         } catch (err) {
             console.error("復元エラー:", err);
-            alert("データの復元に失敗しました。詳細はコンソールを確認してください.");
+            alert("データの取得に失敗しました。");
         }
     }
 
@@ -112,6 +161,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (typeof calculateAll === 'function') calculateAll();
             };
         });
+    }
+
+    // 🌟 ボタンの表示制御（出し分け）ロジック
+    function updateButtonDisplay(status, isCopying) {
+        const btnSaveTemp = document.getElementById('btn-save-temp'); // 一時保存ボタン
+        const btnComplete = document.getElementById('btn-complete');  // 見積確定ボタン
+
+        if (!btnSaveTemp || !btnComplete) return;
+
+        // 【ルール】確定済み(final) かつ コピー中でない 時は「一時保存」を隠す
+        if (status === 'final' && !isCopying) {
+            btnSaveTemp.style.display = 'none';
+            btnComplete.innerText = '確定データを更新'; // ボタン文言を更新用に変更
+        } else {
+            // 新規・下書き・コピー時は両方表示
+            btnSaveTemp.style.display = 'inline-block';
+            btnComplete.innerText = '見積確定';
+        }
     }
 
     // =============================================================
@@ -207,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 estimate_no5: document.getElementById('estimateNo5')?.value || "",
                 estimate_no6: document.getElementById('estimateNo6')?.value || "",
                 estimate_no7: document.getElementById('estimateNo7')?.value || "",
+                revision_number: document.getElementById('estimateNo7')?.value || "",
                 kouji_type: document.querySelector('input[name="koujiType"]:checked')?.value || "",
                 work_company: document.getElementById('workCompany')?.value || "",
                 work_address: document.getElementById('workAddress')?.value || "",
@@ -225,6 +293,69 @@ document.addEventListener('DOMContentLoaded', async () => {
                 is_year_end: document.getElementById('yearEnd')?.checked || false,
                 is_fiscal_end: document.getElementById('fiscalEnd')?.checked || false
             };
+            // =============================================================
+            // 🌟 修正：エラー時に枝番(No7)へカーソルを合わせる(focus)
+            // =============================================================
+            const estimateDate = mainFormData.estimate_date;
+            const isCopying = urlParams.has('copy_from');
+
+            let finalSerialNumber;
+            let finalEstimateNo;
+
+            // 枝番入力欄の要素を取得しておく
+            const estNo7Input = document.getElementById("estimateNo7");
+            const revisionNumber = estNo7Input?.value?.trim() || "";
+
+            // 1. 🌟 未入力チェック
+            if (isCopying || status === 'final') {
+                if (!revisionNumber) {
+                    alert("エラー：枝番（見積番号⑦）が入力されていません。\nコピー時は必ず枝番（01, AAなど）を入力してください。");
+
+                    // カーソルを枝番に合わせて、背景を少し目立たせる（任意）
+                    estNo7Input?.focus();
+                    return;
+                }
+            }
+
+            // 2. 保存する番号（No4）の確定処理
+            if (status === 'final') {
+                if (typeof window.getNextSerialNumber === 'function' && estimateDate) {
+                    const yy = estimateDate.slice(2, 4);
+                    const mm = estimateDate.slice(5, 7);
+                    const yearMonth = `${yy}${mm}`;
+
+                    const nextSer = await window.getNextSerialNumber(yearMonth);
+                    finalSerialNumber = nextSer;
+                    const finalNo4 = String(finalSerialNumber).padStart(2, '0');
+                    finalEstimateNo = `${mainFormData.estimate_no1}${mainFormData.estimate_no2}${mainFormData.estimate_no3}${finalNo4}${mainFormData.estimate_no5}${mainFormData.estimate_no6}${revisionNumber}`;
+                } else {
+                    finalSerialNumber = parseInt(document.getElementById("estimateNo4")?.value) || 0;
+                    finalEstimateNo = document.getElementById("estimateNo")?.value || "";
+                }
+            } else {
+                finalSerialNumber = isCopying ? (parseInt(document.getElementById("estimateNo4")?.value) || 0) : null;
+                finalEstimateNo = document.getElementById("estimateNo")?.value || "";
+            }
+
+            // 3. 🌟 重複チェック
+            if (!estimateId && finalSerialNumber !== null) {
+                const { data: existing, error: checkError } = await supabaseClient
+                    .from('estimates')
+                    .select('id')
+                    .eq('serial_number', finalSerialNumber)
+                    .eq('revision_number', revisionNumber)
+                    .maybeSingle();
+
+                if (existing) {
+                    alert(`エラー：見積番号④ [${finalSerialNumber}] と 枝番 [${revisionNumber}] の組み合わせは既に存在します。\n別の枝番を入力してください。`);
+
+                    // 重複したときもカーソルを合わせ、さらに入力内容を選択状態にする（消しやすいように）
+                    estNo7Input?.focus();
+                    estNo7Input?.select();
+                    return;
+                }
+                if (checkError) console.error("重複チェックエラー:", checkError);
+            }
 
             // 🔹 C. main_form2.js（施工内容タブ）のデータ収集
             const highWorkRows = [];
@@ -459,12 +590,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const payload = {
                 project_name: document.getElementById('projectNameInput')?.value || "件名なし",
-                estimate_no: mainFormData.estimate_no,
+                estimate_no: finalEstimateNo,
+                serial_number: finalSerialNumber, // Integer (数値)
+                revision_number: revisionNumber,   // Text (文字列)
+                estimate_date: estimateDate,
                 company_id: mainFormData.company_id,
                 creator_name: mainFormData.creator_name,
                 destination: mainFormData.destination,
                 status: status,
-                content_data: newContentData // 🔹 まとめて定義したものを入れる
+                content_data: newContentData
             };
             console.log("保存するデータ(daisu_reflect):", daisuReflectData);
 

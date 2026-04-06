@@ -277,3 +277,19 @@ body {
     border-color: #6f42c1;
     box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.1);
 }
+
+/* コピーボタンの基本スタイル */
+.btn-copy {
+    background: transparent;
+    border: 1px solid #0d6efd;
+    color: #0d6efd;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.btn-copy:hover {
+    background: #0d6efd;
+    color: #fff;
+}

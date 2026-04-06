@@ -44,7 +44,16 @@ async function fetchAndDisplayEstimates(status) {
             const badgeClass = status === 'final' ? 'badge-final' : 'badge-draft';
             const badgeText = status === 'final' ? '確定' : '下書き';
 
-            // --- ✨ 修正ポイント：行に状態別のクラス（row-final / row-draft）を付与 ---
+            // --- ✨ 修正ポイント：コピーボタンのHTML定義 ---
+            let copyBtnHtml = '';
+            if (status === 'final') {
+                copyBtnHtml = `
+        <button class="btn-copy me-1" title="コピーして改訂版を作成">
+            <i class="fa-regular fa-copy"></i>
+        </button>
+    `;
+            }
+
             const tr = document.createElement('tr');
             const statusRowClass = status === 'final' ? 'row-final' : 'row-draft';
             tr.className = `row-link ${statusRowClass}`;
@@ -66,21 +75,30 @@ async function fetchAndDisplayEstimates(status) {
                 <td class="text-center">
                     <span class="badge ${badgeClass}">${badgeText}</span>
                 </td>
-                <td style="text-align: right;">
+                <td style="text-align: right; white-space: nowrap;">
+                    ${copyBtnHtml}
                     <button class="btn-open">開く</button>
                 </td>
             `;
-
             // --- 🔹 クリックイベントの登録 ---
             // 1. 行全体のクリック
             tr.addEventListener('click', () => {
                 loadEstimate(item.id);
             });
 
-            // 2. ボタン単体のクリック
+            // 2. コピーボタンのイベント登録（確定時のみ）
+            if (status === 'final') {
+                const copyBtn = tr.querySelector('.btn-copy');
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 行側のクリックを阻止
+                    handleCopy(item);    // 後で作成するコピー処理関数を呼ぶ
+                });
+            }
+
+            // 3. 「開く」ボタン
             const btn = tr.querySelector('.btn-open');
             btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // 行側のクリックイベントが動かないように止める
+                e.stopPropagation();
                 loadEstimate(item.id);
             });
 
@@ -96,4 +114,20 @@ async function fetchAndDisplayEstimates(status) {
 // グローバルスコープで定義
 window.loadEstimate = function (id) {
     window.location.href = `index.html?id=${id}`;
+};
+
+// 🌟 ここから追加
+/**
+ * 見積もりコピー処理（改訂版作成）
+ * 確定済みのデータIDをパラメータに持たせて編集画面へ遷移する
+ */
+window.handleCopy = function (item) {
+    if (!item || !item.id) return;
+
+    // estimate_no を使用してメッセージを表示
+    const targetNo = item.estimate_no || "対象の見積";
+
+    if (confirm(`見積番号「${targetNo}」をコピーして、新しい枝番で改訂版を作成しますか？`)) {
+        window.location.href = `index.html?copy_from=${item.id}`;
+    }
 };

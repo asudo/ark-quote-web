@@ -8,42 +8,101 @@ let userMasterList = [];
 let customerMaster = [];
 let customerContactMaster = [];
 
+// 🌟 修正1：外部から呼び出せる共通関数を先に定義しておく
+// (DOMContentLoadedの外に出すことで、どのタイミングでも呼び出し可能にします)
+window.getNextBranchNumber = async function (serialNo) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('estimates')
+      .select('revision_number')
+      .eq('serial_number', serialNo)
+      .order('revision_number', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    if (data && data.length > 0) {
+      // 既存の最大枝番に+1する（数値として計算し、2桁文字列で返す）
+      const lastBranch = parseInt(data[0].revision_number || "0", 10);
+      return String(lastBranch + 1).padStart(2, "0");
+    }
+    return "01"; // データがなければ 01 スタート
+  } catch (err) {
+    console.error('枝番取得エラー:', err);
+    return "01";
+  }
+};
+
 document.addEventListener("DOMContentLoaded", async function () {
 
-  // --- 🔹 復元用の窓口関数を追加 ---
-  window.restoreMainFormData = async function (data) { 
+  // --- 🔹 準備完了を待つためのユーティリティ ---
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // マスタデータが読み込まれるまで最大5秒待機する関数
+  async function waitUntilMastersLoaded() {
+    let attempts = 0;
+    while (attempts < 50) { // 100ms × 50 = 5秒
+      if (userMasterList.length > 0 && customerMaster.length > 0) {
+        return true;
+      }
+      await sleep(100);
+      attempts++;
+    }
+    return false;
+  }
+
+  // --- 🔹 復元用の窓口関数 ---
+  window.restoreMainFormData = async function (data) {
     if (!data) return;
 
-    // もしユーザーマスタがまだ空だったら、少し待つか読み込みを待機する
-    if (userMasterList.length === 0) {
-      console.log("マスタ読み込み待ちのため、復元を0.5秒遅延させます...");
-      await new Promise(resolve => setTimeout(resolve, 500));
+    // 1. マスタ読み込みを「完全に」待つ
+    await waitUntilMastersLoaded();
+
+    // --- A. 基本フィールドをセット（イベントを飛ばさず、まずは値だけ入れる） ---
+    const setElementValue = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val || "";
+      return el;
+    };
+
+    setElementValue('companySelect', data.company_id);
+    setElementValue('destinationInput', data.destination);
+    setElementValue('estimateDate', data.estimate_date);
+    setElementValue('creatorSelect', data.creator_name);
+
+    // --- B. 連動処理を「順番に」実行 ---
+    // 宛先連動を実行
+    if (typeof handleDestinationChange === 'function') {
+      handleDestinationChange();
     }
 
-    // 作成者(creatorSelect) のセット
-    const creatorEl = document.getElementById('creatorSelect');
-    if (creatorEl) {
-      creatorEl.value = data.creator_name || "";
+    // 🌟 重要：datalistの生成を待つ
+    let retry = 0;
+    const contactOptions = document.getElementById('contactOptions');
+    while (contactOptions && contactOptions.children.length <= 1 && retry < 20) {
+      await new Promise(resolve => setTimeout(resolve, 50)); // sleepの代わり
+      retry++;
     }
 
-    // A. テキスト入力・セレクトボックスの復元
-    const fields = {
-      'companySelect': data.company_id,
-      'creatorSelect': data.creator_name,
-      'destinationInput': data.destination,
-      'contactInput': data.contact,
+    // --- C. 担当者名をセット（リスト準備後） ---
+    const contactEl = setElementValue('contactInput', data.contact);
+    if (contactEl && typeof handleContactChange === 'function') {
+      handleContactChange();
+    }
+
+    // --- D. その他のフィールドを一括セット ---
+    const otherFields = {
       'limitDate': data.limit_date,
       'estimateNo': data.estimate_no,
       'estimateNo1': data.estimate_no1,
       'estimateNo2': data.estimate_no2,
       'estimateNo3': data.estimate_no3,
-      'estimateNo4': data.estimate_no4,
+      // serial_number がある場合はそれを使用
+      'estimateNo4': data.serial_number ? String(data.serial_number).padStart(2, '0') : (data.estimate_no4 || ""),
       'estimateNo5': data.estimate_no5,
       'estimateNo6': data.estimate_no6,
-      'estimateNo7': data.estimate_no7,
+      'estimateNo7': data.revision_number || data.estimate_no7 || "",
       'workCompany': data.work_company,
       'workAddress': data.work_address,
-      'estimateDate': data.estimate_date,
       'workContent': data.work_content,
       'workDetail': data.work_detail,
       'workTypeSelect': data.work_frequency,
@@ -53,36 +112,29 @@ document.addEventListener("DOMContentLoaded", async function () {
       'environmentSelect': data.environment
     };
 
-    // 各IDに対して値をセット
-    Object.keys(fields).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = fields[id] || "";
-    });
+    Object.keys(otherFields).forEach(id => setElementValue(id, otherFields[id]));
 
-    // B. ラジオボタンの復元
+    // --- E. ラジオ・チェックボックスの復元（省略せず実行） ---
     const setRadioValue = (name, value) => {
+      if (!value) return;
       const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
       if (radio) radio.checked = true;
     };
-
     setRadioValue('koujiType', data.kouji_type);
     setRadioValue('summary', data.summary_type);
     setRadioValue('sanpaiStatus', data.sanpai_status);
     setRadioValue('manifestoStatus', data.manifesto_status);
 
-    // C. チェックボックスの復元
-    const setCheckValue = (id, bool) => {
-      const el = document.getElementById(id);
-      if (el) el.checked = !!bool;
-    };
+    // --- F. ダメ押しの「最終セット」 ---
+    // 他のスクリプトによる上書きを防ぐため、少しだけ遅らせて重要な値を再度入れる
+    setTimeout(() => {
+      if (data.creator_name) document.getElementById('creatorSelect').value = data.creator_name;
+      if (data.company_id) document.getElementById('companySelect').value = data.company_id;
 
-    setCheckValue('processSheet', data.is_process_sheet);
-    setCheckValue('yearEnd', data.is_year_end);
-    setCheckValue('fiscalEnd', data.is_fiscal_end);
-
-    // 最後に計算ロジックを叩いて表示を確定させる
-    if (typeof handleDestinationChange === 'function') handleDestinationChange();
-    if (typeof handleContactChange === 'function') handleContactChange();
+      // 全体番号の再計算
+      if (typeof updateFullEstimateNo === 'function') updateFullEstimateNo();
+      console.log("復元処理の最終確定を行いました");
+    }, 200);
   };
 
   // --- 1. Supabaseから全マスタデータを取得 ---
@@ -235,7 +287,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // チェックされているラジオボタンの値を取得
     const selectedType = document.querySelector('input[name="koujiType"]:checked')?.value;
-
     if (selectedType) {
       tagDisplay.innerText = selectedType;
     }
@@ -264,12 +315,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 作成者リスト生成
     const creatorSelect = document.getElementById("creatorSelect");
+    const currentVal = creatorSelect ? creatorSelect.value : "";
     const savedName = sessionStorage.getItem('userName');
+
     if (creatorSelect) {
       creatorSelect.innerHTML = '<option value="">選択してください</option>';
       userMasterList.forEach(user => {
         const opt = new Option(user.user_name, user.user_name);
-        if (user.user_name === savedName) opt.selected = true;
+        if (currentVal && user.user_name === currentVal) {
+          opt.selected = true;
+        } else if (!currentVal && user.user_name === savedName) {
+          opt.selected = true;
+        }
         creatorSelect.add(opt);
       });
       syncCreatorInitial();
@@ -289,14 +346,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     const estDateInput = document.getElementById("estimateDate");
     const limitDateInput = document.getElementById("limitDate");
     const estNo3Input = document.getElementById("estimateNo3");
+    const estNo4Input = document.getElementById("estimateNo4");
 
-    const calculateDates = (val) => {
+    const calculateDates = async (val) => {
       if (!val) return;
       const date = new Date(val);
       if (isNaN(date.getTime())) return;
+
       const yy = date.getFullYear().toString().slice(-2);
       const mm = String(date.getMonth() + 1).padStart(2, "0");
-      if (estNo3Input) estNo3Input.value = `${yy}${mm}`;
+      const yearMonth = `${yy}${mm}`;
+
+      if (estNo3Input) estNo3Input.value = yearMonth;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEditing = urlParams.has('id');
+      const isCopying = urlParams.has('copy_from');
+
+      if (!isEditing && !isCopying && typeof window.getNextSerialNumber === 'function') {
+        const nextSeq = await window.getNextSerialNumber(yearMonth);
+        if (estNo4Input) {
+          estNo4Input.value = String(nextSeq).padStart(2, "0");
+        }
+      }
+
       const deadline = new Date(date);
       deadline.setMonth(deadline.getMonth() + 3);
       if (deadline.getDate() !== date.getDate()) deadline.setDate(0);
@@ -313,6 +386,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       const today = new Date();
       estDateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     }
+
     estDateInput?.addEventListener("change", (e) => calculateDates(e.target.value));
     if (estDateInput.value) calculateDates(estDateInput.value);
 
@@ -330,19 +404,94 @@ document.addEventListener("DOMContentLoaded", async function () {
     radio.addEventListener("change", updateProjectBadges);
   });
 
-  loadDatabaseMasters();
+  // =============================================================
+  // 🌟 実行ブロック：マスタ読み込み後にコピー復元を実行
+  // =============================================================
+  (async () => {
+    // 1. まずマスタ読み込みを完了させ、リスト(select)を生成しきる
+    await loadDatabaseMasters();
 
-  // --- 5. 見積番号の最終合算 ---
+    // 2. URLパラメータを取得
+    const urlParams = new URLSearchParams(window.location.search);
+    const copyFromId = urlParams.get('copy_from');
+
+    // 枝番入力欄と注釈の要素を取得
+    const estNo7 = document.getElementById('estimateNo7');
+    const branchNote = document.getElementById('branchNote');
+
+    // 3. コピー処理がある場合のみ実行
+    if (copyFromId) {
+      try {
+        console.log("コピー元IDを発見しました。復元を開始します...");
+
+        const { data, error } = await supabaseClient
+          .from('estimates')
+          .select('*')
+          .eq('id', copyFromId)
+          .single();
+
+        if (error || !data) throw error;
+
+        // A. データの復元
+        await window.restoreMainFormData(data);
+
+        // B. 自動計算項目の強制発火（連動を確実にする）
+        const companySelect = document.getElementById('companySelect');
+        if (companySelect) companySelect.dispatchEvent(new Event('change'));
+
+        if (typeof handleDestinationChange === 'function') handleDestinationChange();
+        if (typeof handleContactChange === 'function') handleContactChange();
+
+        const estDateInput = document.getElementById("estimateDate");
+        if (estDateInput) estDateInput.dispatchEvent(new Event('change'));
+
+        if (typeof syncCreatorInitial === 'function') syncCreatorInitial();
+
+        // C. 🌟 枝番(No7)の制御（手入力モードへ切り替え）
+        if (estNo7) {
+          estNo7.value = "";           // コピー時は一旦空にする
+          estNo7.readOnly = false;     // 入力可能にする
+          estNo7.required = true;      // 保存時に必須チェックをかける
+
+          // 見た目を強調（赤枠）
+          estNo7.style.backgroundColor = "#ffffff";
+          estNo7.style.border = "2px solid #ff4d4d";
+          estNo7.placeholder = "例: 01";
+        }
+
+        // D. 注釈を赤字で強調
+        if (branchNote) {
+          branchNote.innerText = "※ コピー（改訂）のため、新しい枝番を半角英数字で入力してください。";
+          branchNote.style.color = "#ff4d4d";
+          branchNote.style.fontWeight = "bold";
+        }
+
+        console.log("コピー復元と枝番入力の準備が完了しました。");
+
+      } catch (err) {
+        console.error("コピー復元エラー:", err);
+      }
+    } else {
+      // --- 新規作成時（コピーでない場合）のデフォルト設定 ---
+      if (estNo7) {
+        estNo7.readOnly = true;
+        estNo7.style.backgroundColor = "#e9ecef";
+        estNo7.value = "";
+      }
+    }
+  })();
+
+  // --- 5. 見積番号の最終合算（リアルタイム反映） ---
   setInterval(() => {
-    const fieldIds = ["estimateNo1", "estimateNo2", "estimateNo3", "estimateNo4", "estimateNo5", "estimateNo6"];
+    // No7（枝番）も含めて取得
+    const fieldIds = ["estimateNo1", "estimateNo2", "estimateNo3", "estimateNo4", "estimateNo5", "estimateNo6", "estimateNo7"];
     const values = fieldIds.map(id => document.getElementById(id)?.value.trim() || "");
     const output = document.getElementById("estimateNo");
-    const extra = document.getElementById("estimateNo7")?.value.trim() || "";
 
-    if (values.every(val => val !== "")) {
-      output.value = values.join("") + extra;
-    } else {
-      output.value = "";
+    if (output) {
+      const fullNo = values.join("");
+      output.value = fullNo !== "" ? fullNo : "";
     }
   }, 500);
+
 });
